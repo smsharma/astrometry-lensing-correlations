@@ -1,3 +1,6 @@
+# Large files
+quasars_phot.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
