@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#SBATCH -N 1   # node count
+#SBATCH --ntasks-per-node=10
+#SBATCH -t 24:00:00
+#SBATCH --mem=50GB
+
+source activate
+
+cd /home/sm8383/Lensing-PowerSpectra/Fisher
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sm8383/anaconda3/lib/
+
+
+python fisher.py --i 13
