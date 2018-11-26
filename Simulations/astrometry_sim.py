@@ -11,12 +11,14 @@ from subhalo_sim import SubhaloSample
 import pdf_sampler
 
 class QuasarSim(SubhaloSample):
-    def __init__(self, verbose=True, max_sep=3, data_dir='../data/', save_tag='sample', save=False, save_dir='Output/', *args, **kwargs):
+    def __init__(self, verbose=True, max_sep=3, data_dir='../data/', save_tag='sample', save=False, save_dir='Output/', sim_uniform=False, nside=512, *args, **kwargs):
         """ Class for simulating lens-induced astrometric perturbations
             in Gaia DR2 QSOs. 
         
             :param max_sep: maximum seperation in degrees to consider between lenses and quasars
             :param data_dir: local folder with external data
+            :param sim_uniform: whether to simulate a uniform sample for signal studies
+            :param nside: nside of uniform sample
             *args, **kwargs: lens population parameters passed to the SubhaloSample class 
         """
         SubhaloSample.__init__(self, *args, **kwargs)
@@ -28,8 +30,11 @@ class QuasarSim(SubhaloSample):
         self.save_tag = save_tag
         self.save = save
         
-        self.load_gaia_quasars()
-        # self.load_uniform_sample(128)
+        if sim_uniform:
+            self.load_uniform_sample(nside)
+        else:
+            self.load_gaia_quasars()
+            
         self.analysis_pipeline()
 
     def analysis_pipeline(self):
