@@ -11,24 +11,25 @@ from subhalo_sim import SubhaloSample
 import pdf_sampler
 
 class QuasarSim(SubhaloSample):
-    def __init__(self, verbose=True, max_sep=2, data_folder='../data/', save_tag='sample', save=False, save_folder='Output/', *args, **kwargs):
+    def __init__(self, verbose=True, max_sep=3, data_dir='../data/', save_tag='sample', save=False, save_dir='Output/', *args, **kwargs):
         """ Class for simulating lens-induced astrometric perturbations
             in Gaia DR2 QSOs. 
         
             :param max_sep: maximum seperation in degrees to consider between lenses and quasars
-            :param data_folder: local folder with external data
+            :param data_dir: local folder with external data
             *args, **kwargs: lens population parameters passed to the SubhaloSample class 
         """
         SubhaloSample.__init__(self, *args, **kwargs)
         
         self.max_sep = max_sep
         self.verbose = verbose
-        self.data_folder = data_folder
-        self.save_folder = save_folder
+        self.data_dir = data_dir
+        self.save_dir = save_dir
         self.save_tag = save_tag
         self.save = save
         
         self.load_gaia_quasars()
+        # self.load_uniform_sample(128)
         self.analysis_pipeline()
 
     def analysis_pipeline(self):
@@ -50,7 +51,7 @@ class QuasarSim(SubhaloSample):
     def load_gaia_quasars(self):
         """ Load quasars and their positions
         """
-        pd_qsrs = pd.read_csv(self.data_folder + "quasars_phot.csv")
+        pd_qsrs = pd.read_csv(self.data_dir + "quasars_phot.csv")
 
         ra = pd_qsrs['ra'].values
         dec = pd_qsrs['dec'].values
@@ -60,21 +61,35 @@ class QuasarSim(SubhaloSample):
         self.coords_qsrs = coords_qsrs_icrs.transform_to('galactic')
         self.n_qsrs = len(pd_qsrs)
 
+    def load_uniform_sample(self, nside):
+        l_ary, b_ary = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)), lonlat=True)
+        self.coords_qsrs = SkyCoord(l=l_ary*u.deg, b=b_ary*u.deg, frame='galactic')
+        self.n_qsrs = hp.nside2npix(nside)
+
+    def get_angular_sep(self, pos1, pos2):
+        l1, b1 = pos1
+        l2, b2 = pos2
+
+        if l1 - l2 > 180.: l2 += 360.
+        elif l2 - l1 > 180.: l1 += 360.
+
+        if b1 - b2 > 90.: b2 += 180.
+        elif b2 - b1 > 90.: b1 += 180.
+
+        return (l1 - l2)*np.pi/180, (b1 - b2)*np.pi/180
+
     def get_velocities(self):
         """ Get induced velocities of quasars and store them in self.mu_qsrs
         """
 
-        # Galactic coordinates of lenses
-        coords_lenses = SkyCoord(frame="galactic", l=self.coords_galactic.l, b=self.coords_galactic.b)
-
         # Get indices `idxs_qsrs` of objects within `max_sep` of the lenses with indixes `idxs_lenses`
-        idxs_lenses, idxs_qsrs, _, _ = self.coords_qsrs.search_around_sky(coords_lenses, self.max_sep*u.deg)  
+        idxs_lenses, idxs_qsrs, _, _ = self.coords_qsrs.search_around_sky(self.coords_galactic, self.max_sep*u.deg)  
 
         ## Loop over lenses and get induced velocities for nearby (within `max_sep`) quasars
 
         self.mu_qsrs = np.zeros((self.n_qsrs,2))
 
-        for i_lens in tqdm(range(self.n_sh), disable=1-self.verbose):
+        for i_lens in tqdm_notebook(range(self.n_sh), disable=1-self.verbose):
                         
             # Lens velocity
             self.pm_l_cosb_lens = self.coords_galactic.pm_l_cosb.value[i_lens]
@@ -89,18 +104,27 @@ class QuasarSim(SubhaloSample):
             # Lens position
             self.l_lens = self.coords_galactic.l.value[i_lens]
             self.b_lens = self.coords_galactic.b.value[i_lens]
-            
-            # Angular impact parameters of quasars around lens i_lens
-            beta_lens_qsrs_around = np.transpose([self.coords_qsrs.l.value[idxs_qsrs_around] - self.l_lens, 
-                self.coords_qsrs.b.value[idxs_qsrs_around] - self.b_lens])*np.pi/180
+
+            # # Angular impact parameters of quasars around lens i_lens
+
+            # beta_lens_qsrs_around = np.transpose([self.coords_qsrs.l.value[idxs_qsrs_around] - self.l_lens, 
+            #     self.coords_qsrs.b.value[idxs_qsrs_around] - self.b_lens])*np.pi/180
+            # print(beta_lens_qsrs_around)
+
+            # This can be sped up/improved!
+            beta_lens_qsrs_around = [self.get_angular_sep([self.coords_qsrs.l.value[idxs_qsrs_around][i], self.coords_qsrs.b.value[idxs_qsrs_around][i]], [self.l_lens, self.b_lens]) for i in range(len(idxs_qsrs_around))]
+
+            # self.d_sample = 10*kpc*np.ones(self.n_qsrs)
 
             # Grab some lens properties
             c200_lens, m_lens, d_lens = self.c200_sample[i_lens], self.m_sample[i_lens], self.d_sample[i_lens]
             
             for i_qsr, idx_qsr in enumerate(idxs_qsrs_around):
 
-                mu_qsr = self.mu(beta_lens_qsrs_around[i_qsr],
-                                v_lens, c200_lens, m_lens, d_lens)
+                # beta_lens = self.get_angular_sep([self.coords_qsrs.l.value[idx_qsr], self.coords_qsrs.b.value[idx_qsr]], [self.l_lens, self.b_lens])
+
+                mu_qsr = self.mu(beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
+                # mu_qsr = self.mu(beta_lens, v_lens, c200_lens, m_lens, d_lens)
                 
                 self.mu_qsrs[idx_qsr] += mu_qsr
 
@@ -108,7 +132,7 @@ class QuasarSim(SubhaloSample):
         """ Save sim output
         """
 
-        np.savez('Output/mu_qsrs_' + self.save_tag,
+        np.savez(self.save_dir + '/' + self.save_tag,
             pos_lens=[self.coords_galactic.l.value, self.coords_galactic.b.value],
             vel_lens=[self.coords_galactic.pm_l_cosb.value, self.coords_galactic.pm_b.value],
             mu_qsrs=np.transpose(self.mu_qsrs*1e3), # in mas/yr

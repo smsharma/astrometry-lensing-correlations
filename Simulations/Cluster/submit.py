@@ -7,8 +7,8 @@ batch='''#!/bin/bash
 
 #SBATCH -N 1   # node count
 #SBATCH --ntasks-per-node=1
-#SBATCH -t 4:00:00
-#SBATCH --mem=8GB
+#SBATCH -t 3:00:00
+#SBATCH --mem=4GB
 
 source activate
 
