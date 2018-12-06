@@ -1,12 +1,13 @@
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord, Galactic, Galactocentric, CartesianDifferential
+from scipy.misc import derivative
 
 import pdf_sampler
 from units import *
 
 class SubhaloSample:
-    def __init__(self, r_vir=213.5*kpc, m_host=1.4e12*M_s, m_min=10**-6, m_max=1e-1, alpha_m=1.9, m_min_calib=1e8*M_s, m_max_calib=1e10*M_s, n_calib=None, n_sh=None, sh_m_frac=1, m_delta=None, c200_delta=None, sh_distrib='Aq1'):
+    def __init__(self, r_vir=213.5*kpc, m_host=1.4e12*M_s, m_min=10**-6, m_max=1e-1, alpha_m=1.9, m_min_calib=1e8*M_s, m_max_calib=1e10*M_s, n_calib=None, n_sh=None, sh_m_frac=1, m_delta=None, c200_delta=None, sh_distrib='Aq1', t=365.25):
         """ Class for generating a Galactic subhalo sample
         Args:
             r_vir: host virial radius in natural units
@@ -21,6 +22,7 @@ class SubhaloSample:
             sh_m_frac: Subhalos mass fraction, if specified will override n_calib
             m_delta: if specified, generate all subhalos at single mass 
             sh_distrib: distribution of subhalos, 'MW' or 'Aq1' 
+            t: time of year in days at which to use Earth velocity 
         """
 
         self.r_vir = r_vir
@@ -49,6 +51,8 @@ class SubhaloSample:
         self.sh_m_frac = sh_m_frac
 
         self.c200_delta = c200_delta
+
+        self.t = t
 
     def get_sh_sample(self):
         """ Generate sample of subhalos
@@ -143,12 +147,29 @@ class SubhaloSample:
         """ Convert to Galactic coordinates
         """
         coords_xyz = self.sample_spherical(self.n_sh)  # Sample random vectors
-        self.coords_gc = Galactocentric(x=coords_xyz[0]*self.r_sample/kpc*u.kpc,  # Scale vectors by sampled 
+        v_sun = np.array([11., 232., 7.])
+        v_E = self.vE(self.t)
+
+        # Rotate about x-axis to ecliptic coordinates
+        v_sun_E_ecliptic = CartesianDifferential(np.array([0, np.linalg.norm(v_sun + v_E), 0])*u.km/u.s)
+
+        self.coords_gc = Galactocentric(
+                             x=coords_xyz[0]*self.r_sample/kpc*u.kpc,  # Scale vectors by sampled 
                              y=coords_xyz[1]*self.r_sample/kpc*u.kpc,  # distance and convert to 
                              z=coords_xyz[2]*self.r_sample/kpc*u.kpc,  # galactocentric coordinates
-                             v_x=self.coords_vxyz[1]/Kmps*u.km/u.s,
+                             v_x=self.coords_vxyz[0]/Kmps*u.km/u.s,
                              v_y=self.coords_vxyz[1]/Kmps*u.km/u.s,
-                             v_z=self.coords_vxyz[1]/Kmps*u.km/u.s)
+                             v_z=self.coords_vxyz[2]/Kmps*u.km/u.s,
+                             # x=np.array([0.])*u.kpc,  # Scale vectors by sampled 
+                             # y=np.array([0.])*u.kpc,  # distance and convert to 
+                             # z=np.array([0.])*u.kpc,  # galactocentric coordinates
+                             # x=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.kpc,  # Scale vectors by sampled 
+                             # y=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.kpc,  # distance and convert to 
+                             # z=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.kpc,  # galactocentric coordinates
+                             # v_x=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.km/u.s,
+                             # v_y=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.km/u.s,
+                             # v_z=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.km/u.s,
+                             galcen_v_sun=v_sun_E_ecliptic)
 
         self.coords_galactic =self.coords_gc.transform_to(Galactic)  # Transform to local coordinates
         self.d_sample = self.coords_galactic.distance.value*kpc
@@ -160,3 +181,11 @@ class SubhaloSample:
         pars=[37.5153, -1.5093, 1.636e-2, 3.66e-4, -2.89237e-5, 5.32e-7][::-1]
         return np.polyval(pars, x)
 
+    def vE(self, t):
+        """ Earth velocity at time t
+        """
+        g = lambda t: omega*t
+        nu = lambda g: g + 2*e*np.sin(g) + (5/4.)*e**2*np.sin(2*g)
+        lambdaa = lambda t: lambdap + nu(g(t))
+        r = lambda t: vE0/omega*(1-e**2)/(1+e*np.cos(nu(g(t))))*(np.sin(lambdaa(t))*e1 - np.cos(lambdaa(t))*e2)
+        return derivative(r,t)
