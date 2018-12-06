@@ -61,9 +61,10 @@ class QuasarSim(SubhaloSample):
         ra = pd_qsrs['ra'].values
         dec = pd_qsrs['dec'].values
 
-        coords_qsrs_icrs = SkyCoord(ra=ra*u.deg, dec=dec*u.deg, frame='icrs')
+        # coords_qsrs_icrs = SkyCoord(ra=ra*u.deg, dec=dec*u.deg, frame='icrs')
+        # self.coords_qsrs = coords_qsrs_icrs.transform_to('galactic')
 
-        self.coords_qsrs = coords_qsrs_icrs.transform_to('galactic')
+        self.coords_qsrs = SkyCoord(l=ra*u.deg, b=dec*u.deg, frame='galactic')
         self.n_qsrs = len(pd_qsrs)
 
     def load_uniform_sample(self, nside):
@@ -94,7 +95,7 @@ class QuasarSim(SubhaloSample):
 
         self.mu_qsrs = np.zeros((self.n_qsrs,2))
 
-        for i_lens in tqdm_notebook(range(self.n_sh), disable=1-self.verbose):
+        for i_lens in tqdm(range(self.n_sh), disable=1-self.verbose):
                         
             # Lens velocity
             self.pm_l_cosb_lens = self.coords_galactic.pm_l_cosb.value[i_lens]
@@ -112,25 +113,19 @@ class QuasarSim(SubhaloSample):
 
             # # Angular impact parameters of quasars around lens i_lens
 
-            # beta_lens_qsrs_around = np.transpose([self.coords_qsrs.l.value[idxs_qsrs_around] - self.l_lens, 
+            # # Old code, has bug at discontinuities of healpix coordinates
+            # self.beta_lens_qsrs_around = np.transpose([self.coords_qsrs.l.value[idxs_qsrs_around] - self.l_lens, 
             #     self.coords_qsrs.b.value[idxs_qsrs_around] - self.b_lens])*np.pi/180
-            # print(beta_lens_qsrs_around)
 
             # This can be sped up/improved!
-            beta_lens_qsrs_around = [self.get_angular_sep([self.coords_qsrs.l.value[idxs_qsrs_around][i], self.coords_qsrs.b.value[idxs_qsrs_around][i]], [self.l_lens, self.b_lens]) for i in range(len(idxs_qsrs_around))]
-
-            # self.d_sample = 10*kpc*np.ones(self.n_qsrs)
+            self.beta_lens_qsrs_around = np.array([self.get_angular_sep([self.coords_qsrs.l.value[idxs_qsrs_around][i], self.coords_qsrs.b.value[idxs_qsrs_around][i]], [self.l_lens, self.b_lens]) for i in range(len(idxs_qsrs_around))])
 
             # Grab some lens properties
             c200_lens, m_lens, d_lens = self.c200_sample[i_lens], self.m_sample[i_lens], self.d_sample[i_lens]
-            
+
+            # Populate quasar induced velocity array
             for i_qsr, idx_qsr in enumerate(idxs_qsrs_around):
-
-                # beta_lens = self.get_angular_sep([self.coords_qsrs.l.value[idx_qsr], self.coords_qsrs.b.value[idx_qsr]], [self.l_lens, self.b_lens])
-
-                mu_qsr = self.mu(beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
-                # mu_qsr = self.mu(beta_lens, v_lens, c200_lens, m_lens, d_lens)
-                
+                mu_qsr = self.mu(self.beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
                 self.mu_qsrs[idx_qsr] += mu_qsr
 
     def save_products(self):

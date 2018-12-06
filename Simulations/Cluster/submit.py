@@ -19,7 +19,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sm8383/anaconda3/lib/
 '''
 
 for imc in range(10):
-    for log10M in np.arange(7,12):
+    for log10M in np.arange(8,12):
+    # for log10M in [7]:
         for mfrac in np.arange(0.1,1.1,0.1):
 
             batchn = batch  + "\n"
