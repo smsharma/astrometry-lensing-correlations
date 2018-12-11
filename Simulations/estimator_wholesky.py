@@ -36,9 +36,6 @@ def get_Cells(alm_theta, alm_phi, lmax):
 
     ell = np.arange(len(Cl_B))
 
-#     Cl_B /= 2*ell+1
-#     Cl_C /= 2*ell+1
-
     return Cl_B, Cl_C, fB_ary, fC_ary
 
 def get_vector_alm(map_theta, map_phi):
