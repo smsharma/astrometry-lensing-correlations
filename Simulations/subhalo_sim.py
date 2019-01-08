@@ -7,7 +7,7 @@ import pdf_sampler
 from units import *
 
 class SubhaloSample:
-    def __init__(self, r_vir=213.5*kpc, m_host=1.4e12*M_s, m_min=10**-6, m_max=1e-1, alpha_m=1.9, m_min_calib=1e8*M_s, m_max_calib=1e10*M_s, n_calib=None, n_sh=None, sh_m_frac=1, m_delta=None, c200_delta=None, sh_distrib='Aq1', t=365.25):
+    def __init__(self, r_vir=213.5*kpc, m_host=1.4e12*M_s, m_min=10**-6, m_max=1e-1, alpha_m=1.9, m_min_calib=1e8*M_s, m_max_calib=1e10*M_s, n_calib=None, n_sh=None, sh_m_frac=1, m_delta=None, c200_delta=None, sh_distrib='Aq1', t=365.25, custom_coords=None):
         """ Class for generating a Galactic subhalo sample
         Args:
             r_vir: host virial radius in natural units
@@ -53,6 +53,7 @@ class SubhaloSample:
         self.c200_delta = c200_delta
 
         self.t = t
+        self.custom_coords = custom_coords
 
     def get_sh_sample(self):
         """ Generate sample of subhalos
@@ -147,8 +148,8 @@ class SubhaloSample:
         """ Convert to Galactic coordinates
         """
         coords_xyz = self.sample_spherical(self.n_sh)  # Sample random vectors
-        v_sun = np.array([11., 232., 7.])
-        v_E = self.vE(self.t)
+        v_sun = np.array([11., 232., 7.]) # Velocity of the Sub in Galactocentric frame
+        v_E = self.vE(self.t) # Earth velocity
 
         # Rotate about x-axis to ecliptic coordinates
         v_sun_E_ecliptic = CartesianDifferential(np.array([0, np.linalg.norm(v_sun + v_E), 0])*u.km/u.s)
@@ -160,19 +161,15 @@ class SubhaloSample:
                              v_x=self.coords_vxyz[0]/Kmps*u.km/u.s,
                              v_y=self.coords_vxyz[1]/Kmps*u.km/u.s,
                              v_z=self.coords_vxyz[2]/Kmps*u.km/u.s,
-                             # x=np.array([0.])*u.kpc,  # Scale vectors by sampled 
-                             # y=np.array([0.])*u.kpc,  # distance and convert to 
-                             # z=np.array([0.])*u.kpc,  # galactocentric coordinates
-                             # x=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.kpc,  # Scale vectors by sampled 
-                             # y=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.kpc,  # distance and convert to 
-                             # z=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.kpc,  # galactocentric coordinates
-                             # v_x=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.km/u.s,
-                             # v_y=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.km/u.s,
-                             # v_z=np.zeros_like(self.coords_vxyz[0]/Kmps)*u.km/u.s,
                              galcen_v_sun=v_sun_E_ecliptic)
 
-        self.coords_galactic =self.coords_gc.transform_to(Galactic)  # Transform to local coordinates
+        self.coords_galactic = self.coords_gc.transform_to(Galactic)  # Transform to local coordinates
         self.d_sample = self.coords_galactic.distance.value*kpc
+
+        if self.custom_coords is not None:
+            custom_l, custom_b, custom_pm_l_cosb, custom_pm_b, custom_d = self.custom_coords
+            self.coords_galactic = Galactic(l=custom_l, b=custom_b, pm_l_cosb=custom_pm_l_cosb, pm_b=custom_pm_b)
+            self.d_sample = custom_d
 
     def c200(self, m200):
         """ Virial concentration according to Sanchez-Conde&Prada14
@@ -182,7 +179,7 @@ class SubhaloSample:
         return np.polyval(pars, x)
 
     def vE(self, t):
-        """ Earth velocity at time t
+        """ Earth velocity at day of year t 
         """
         g = lambda t: omega*t
         nu = lambda g: g + 2*e*np.sin(g) + (5/4.)*e**2*np.sin(2*g)
