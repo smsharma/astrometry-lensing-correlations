@@ -3,7 +3,7 @@
 #SBATCH -N 1   # node count
 #SBATCH --ntasks-per-node=1
 #SBATCH -t 3:00:00
-#SBATCH --mem=4GB
+#SBATCH --mem=8GB
 
 source activate
 
@@ -12,4 +12,4 @@ cd /home/sm8383/Lensing-PowerSpectra/Simulations
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sm8383/anaconda3/lib/
 
 
-python astrometry_sim_interface.py --log10M 10 --mfrac 0.8 --imc 0
+python astrometry_sim_interface.py --lcdm 0 --log10M 10 --mfrac 0.8 --imc 0
