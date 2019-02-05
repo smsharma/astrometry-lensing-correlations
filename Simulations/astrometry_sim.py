@@ -178,6 +178,7 @@ class QuasarSim(SubhaloSample):
         v_vec = d_lens*np.array(v_ang_vec) # Convert angular to physical velocity
         b = np.linalg.norm(b_vec) # Impact parameter
         M, dMdb = self.MdMdb_NFW(b, c200_lens, M200_lens)
+        # M, dMdb = self.MdMdb_Gauss(b, 1.*kpc, M200_lens)
         b_unit_vec = b_vec/b # Convert angular to physical impact parameter
         b_dot_v = np.dot(b_unit_vec, v_vec)
         factor = (dMdb/b*b_unit_vec*b_dot_v 
@@ -217,11 +218,14 @@ class QuasarSim(SubhaloSample):
         
         return M, dMdb
 
-    def MdMdb_Gaussian(self, b):
+    def MdMdb_Gauss(self, b, R0, M0):
         """ Mass and derivative within a cylinder of radius `b`
             for a Gaussian lens
+            :param b: cylinder radius, in natural units
+            :param R0: characteristic radius of lens
+            :param M0: mass of lens
         """
-        M = 
-        dMdb =
+        M = M0*(1-np.exp(-b**2/(2*R0**2)))
+        dMdb = (M0*b/R0**2)*np.exp(-b**2/(2*R0**2))
 
         return M, dMdb
