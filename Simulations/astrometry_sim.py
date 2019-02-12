@@ -213,8 +213,8 @@ class QuasarSim(SubhaloSample):
         b_vec = d_lens*np.array(beta_vec) # Convert angular to physical impact parameter
         v_vec = d_lens*np.array(v_ang_vec) # Convert angular to physical velocity
         b = np.linalg.norm(b_vec) # Impact parameter
-        # M, dMdb = self.MdMdb_NFW(b, c200_lens, M200_lens)
-        M, dMdb, d2Mdb2 = self.MdMdb_Gauss(b, 1.*kpc, M200_lens)
+        M, dMdb, d2Mdb2 = self.MdMdb_NFW(b, c200_lens, M200_lens)
+        # M, dMdb, d2Mdb2 = self.MdMdb_Gauss(b, 1.*kpc, M200_lens)
         b_unit_vec = b_vec/b # Convert angular to physical impact parameter
         b_dot_v = np.dot(b_unit_vec, v_vec)
         factor = (6 * b_vec * b_dot_v ** 2 * M - 2 * b * ((2 * v_vec * b_dot_v
@@ -226,7 +226,11 @@ class QuasarSim(SubhaloSample):
 
         return -factor*4*GN/(asctorad/Year**2) # Convert to as/yr
 
-
+    def d2Fdx2(self, x):
+        """ Helper function for NFW deflection, derivative of dFdx
+        """
+        return (1-3*x**2+(x**2+x**4)*self.F(x)+(x**3-x**5)*self.dFdx(x))/(x**2*(-1+x**2)**2)
+    
     def dFdx(self, x):
         """ Helper function for NFW deflection, from astro-ph/0102341 eq. (49)
         """
@@ -256,8 +260,8 @@ class QuasarSim(SubhaloSample):
         x = b/r_s 
         M = 4*np.pi*rho_s*r_s**3*(np.log(x/2.) + self.F(x))
         dMdb = 4*np.pi*rho_s*r_s**2*((1/x) + self.dFdx(x))
-        
-        return M, dMdb
+        d2Mdb2 = 4*np.pi*r_s**2*rho_s*(-(1/(x**2*r_s)) + self.d2Fdx2(x)/r_s)
+        return M, dMdb, d2Mdb2
 
     def MdMdb_Gauss(self, b, R0, M0):
         """ Mass and derivative within a cylinder of radius `b`
