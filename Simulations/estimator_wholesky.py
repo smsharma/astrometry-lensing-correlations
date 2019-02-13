@@ -18,12 +18,8 @@ def fC(l, m, gtheta_ary, gphi_ary, lmax):
 def get_alm_theta_phi(map_theta, map_phi, map_theta_2=None, map_phi_2=None):
     nside = hp.npix2nside(len(map_theta))
     lmax = 3*nside - 1
-    if map_theta_2 is None and map_phi_2 is None:
-        alm_theta = hp.map2alm(map_theta, lmax=lmax)
-        alm_phi = hp.map2alm(map_phi, lmax=lmax)
-    else:
-        alm_theta = hp.map2alm([map_theta, map_theta_2], lmax=lmax)
-        alm_phi = hp.map2alm([map_phi, map_phi_2], lmax=lmax)
+    alm_theta = hp.map2alm(map_theta, lmax=lmax)
+    alm_phi = hp.map2alm(map_phi, lmax=lmax)
     return alm_theta, alm_phi, lmax
 
 def get_Cells(alm_theta, alm_phi, lmax):
@@ -37,21 +33,22 @@ def get_Cells(alm_theta, alm_phi, lmax):
     Cl_B = 2*np.sum(np.abs(fB_ary)**2, axis=1)
     Cl_C = 2*np.sum(np.abs(fC_ary)**2, axis=1)
 
-    ell = np.arange(len(Cl_B))
 
     return Cl_B, Cl_C, fB_ary, fC_ary
 
-def get_vector_alm(map_theta, map_phi, map_theta_2=None, map_phi_2=None):
+def get_vector_alm(map_theta, map_phi):
     # Construct auxiliary maps
     nside = hp.npix2nside(len(map_theta))
     theta, phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     map_theta_aux = map_theta/np.sin(theta)
     map_phi_aux = map_phi/np.sin(theta)
-    if map_theta_2 is None and map_phi_2 is None:
-        alm_theta, alm_phi, lmax = get_alm_theta_phi(map_theta_aux, map_phi_aux)
-    else:
-        map_theta_aux_2 = map_theta_2/np.sin(theta)
-        map_phi_aux_2 = map_phi_2/np.sin(theta)
-        alm_theta, alm_phi, lmax = get_alm_theta_phi(map_theta_aux, map_phi_aux, map_theta_aux_2, map_phi_aux_2)
+    alm_theta, alm_phi, lmax = get_alm_theta_phi(map_theta_aux, map_phi_aux)
     Cl_B, Cl_C, fB_ary, fC_ary = get_Cells(alm_theta, alm_phi, lmax)
     return Cl_B, Cl_C, fB_ary, fC_ary
+
+def get_cross_correlation_Cells(flm1, flm2):
+    """ Get cross-correlation C_ells from to mu_lm matrices
+    """
+    return np.sum(np.conjugate(flm1)*flm2 + np.conjugate(flm2)*flm1, axis=1)
+
+
