@@ -7,7 +7,7 @@ import pdf_sampler
 from units import *
 
 class SubhaloSample:
-    def __init__(self, r_vir=213.5*kpc, m_host=1.4e12*M_s, m_min=10**-6, m_max=1e-1, alpha_m=1.9, m_min_calib=1e8*M_s, m_max_calib=1e10*M_s, n_calib=None, n_sh=None, sh_m_frac=1, m_delta=None, c200_delta=None, sh_distrib='Aq1', t=365.25, custom_coords=None):
+    def __init__(self, r_vir=213.5*kpc, m_host=1.4e12*M_s, m_min=10**-6, m_max=1e-1, alpha_m=1.9, m_min_calib=1e8*M_s, m_max_calib=1e10*M_s, n_calib=None, n_sh=None, sh_m_frac=1, m_delta=None, sh_distrib='Aq1', t=365.25, custom_coords=None, sh_profile='NFW'):
         """ Class for generating a Galactic subhalo sample
         Args:
             r_vir: host virial radius in natural units
@@ -23,6 +23,8 @@ class SubhaloSample:
             m_delta: if specified, generate all subhalos at single mass 
             sh_distrib: distribution of subhalos, 'MW' or 'Aq1' 
             t: time of year in days at which to use Earth velocity 
+            custom_coords: Custom subhalo coordinates
+            sh_profile: ["NFW", "Plummer"]
         """
 
         self.r_vir = r_vir
@@ -50,10 +52,10 @@ class SubhaloSample:
         self.n_sh = n_sh
         self.sh_m_frac = sh_m_frac
 
-        self.c200_delta = c200_delta
-
         self.t = t
         self.custom_coords = custom_coords
+
+        self.sh_profile = sh_profile
 
     def get_sh_sample(self):
         """ Generate sample of subhalos
@@ -127,15 +129,15 @@ class SubhaloSample:
             self.m_sample = self.m_delta*np.ones(self.n_sh)
 
     def get_sh_prop(self):
-        """ Get subhalos rvir and rs
+        """ Get subhalos properties
         """
-        if self.c200_delta is not None:
-            self.c200_sample = np.ones(self.n_sh)*self.c200_delta
-        else:
+        if self.sh_profile == "NFW":
             self.c200_sample = np.array([self.c200(m/M_s) for m in self.m_sample])
-        self.r200_sample = np.array([(m/(4/3.*np.pi*200*rho_c))**(1/3.) for m in self.m_sample])
-        self.rs_sample = self.r200_sample/self.c200_sample
-        self.rho_s_sample = rho_c*(200/3.)*self.c200_sample**3/(np.log(1 + self.c200_sample) - self.c200_sample/(1 + self.c200_sample))
+            self.r200_sample = np.array([(m/(4/3.*np.pi*200*rho_c))**(1/3.) for m in self.m_sample])
+            self.rs_sample = self.r200_sample/self.c200_sample
+            self.rho_s_sample = rho_c*(200/3.)*self.c200_sample**3/(np.log(1 + self.c200_sample) - self.c200_sample/(1 + self.c200_sample))
+        elif self.sh_profile in ["Plummer", "Gaussian"]:
+            self.c200_sample = np.array([self.R0_VL(m) for m in self.m_sample])
 
     def sample_spherical(self, npoints, ndim=3):
         """ Sample random vectors
@@ -177,6 +179,12 @@ class SubhaloSample:
         x=np.log(m200*h) # Given in terms of M_s/h in S-C&P paper
         pars=[37.5153, -1.5093, 1.636e-2, 3.66e-4, -2.89237e-5, 5.32e-7][::-1]
         return np.polyval(pars, x)
+
+    def R0_VL(self, M0):
+        """ "Concentration-mass" relation for Plummer profile from 1711.03554
+        """
+        return 1.2*kpc*(M0/(1e8*M_s))**0.5
+
 
     def vE(self, t):
         """ Earth velocity at day of year t 
