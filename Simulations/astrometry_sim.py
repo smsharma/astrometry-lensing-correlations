@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import healpy as hp
 from astropy import units as u
@@ -13,7 +12,7 @@ from estimator_wholesky import get_vector_alm, get_cross_correlation_Cells
 class QuasarSim(SubhaloSample):
     def __init__(self, verbose=True, max_sep=3, data_dir='../data/', save_tag='sample', save=False, save_dir='Output/', sim_uniform=False, nside=512, calc_powerspecs=True, do_alpha=False, *args, **kwargs):
         """ Class for simulating lens-induced astrometric perturbations
-            in Gaia DR2 QSOs. 
+            in Gaia DR2 QSOs or a uniform quasar sample. 
         
             :param verbose: whether to print out progress
             :param max_sep: maximum seperation in degrees to consider between lenses and quasars
@@ -88,8 +87,8 @@ class QuasarSim(SubhaloSample):
         self.n_qsrs = hp.nside2npix(nside)
 
     def get_angular_sep_dir(self, pos1, pos2):
-        """ Get angular separation vector in (l, b) directions
-            pointing from pos2 to pos1
+        """ Get unit separation vector in (l, b) direction
+            pointing from pos2 to pos1 in the plane of pos2
         """
 
         # pos1 is quasar/source,  pos2 is lens
@@ -104,8 +103,8 @@ class QuasarSim(SubhaloSample):
         phi_hat = [-np.sin(phi_lens), np.cos(phi_lens), 0]
 
         # Get vectors corresponding to pos1 and pos2
-        vec1 = hp.ang2vec(theta_src, phi_src)
-        vec2 = hp.ang2vec(theta_lens, phi_lens)
+        vec1 = np.array([np.sin(theta_src)*np.cos(phi_src), np.sin(theta_src)*np.sin(phi_src), np.cos(theta_src)])
+        vec2 = np.array([np.sin(theta_lens)*np.cos(phi_lens), np.sin(theta_lens)*np.sin(phi_lens), np.cos(theta_lens)])
 
         dvec = vec1 - vec2
 
@@ -120,10 +119,11 @@ class QuasarSim(SubhaloSample):
         """ Get induced velocities (and optionally accelerations) of quasars and store them in self.mu_qsrs
         """
 
-        # Get indices `idxs_qsrs` of objects within `max_sep` of the lenses with indices `idxs_lenses`
+        # Get indices and angular separations of objects within `max_sep` of the lenses with indices `idxs_lenses`
         idxs_lenses, idxs_qsrs, self.sep2d, _ = self.coords_qsrs.search_around_sky(self.coords_galactic, self.max_sep*u.deg)  
         self.sep2d = np.deg2rad(self.sep2d.value)
-        ## Loop over lenses and get induced velocities for nearby (within `max_sep`) quasars
+
+        ## Loop over lenses and get induced velocities (and optionally accelerations) for nearby (within `max_sep`) quasars
 
         self.mu_qsrs = np.zeros((self.n_qsrs,2))
         self.alpha_qsrs = np.zeros((self.n_qsrs,2))
@@ -147,7 +147,7 @@ class QuasarSim(SubhaloSample):
             self.l_lens = self.coords_galactic.l.value[i_lens]
             self.b_lens = self.coords_galactic.b.value[i_lens]
 
-            # # Angular impact parameters of quasars around lens i_lens
+            # Angular impact parameters of quasars around lens i_lens
             # This can be sped up/improved!
             self.beta_lens_qsrs_around =  np.array([beta_ary[i]*self.get_angular_sep_dir([self.coords_qsrs.l.value[idxs_qsrs_around][i], self.coords_qsrs.b.value[idxs_qsrs_around][i]], [self.l_lens, self.b_lens]) for i in (range(len(idxs_qsrs_around)))])
 
@@ -159,13 +159,13 @@ class QuasarSim(SubhaloSample):
                 mu_qsr = self.mu(self.beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
                 self.mu_qsrs[idx_qsr] += mu_qsr
 
-                # Get induced acclerations if specified
+                # Get induced accleration as well if specified
                 if self.do_alpha:
                     alpha_qsr = self.alpha(self.beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
                     self.alpha_qsrs[idx_qsr] += alpha_qsr
    
     def get_powerspecs(self):
-        """ Calculate vector spherical harmonics
+        """ Calculate vector spherical harmonic coefficients
         """
         if self.calc_powerspecs:
             self.Cl_B, self.Cl_C, self.fB, self.fC = get_vector_alm(self.mu_qsrs[:,1], self.mu_qsrs[:,0])
@@ -173,11 +173,14 @@ class QuasarSim(SubhaloSample):
                 self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = get_vector_alm(self.alpha_qsrs[:,1], self.alpha_qsrs[:,0])
                 self.Cl_B_mu_alpha = get_cross_correlation_Cells(self.fB, self.fB_alpha)
                 self.Cl_C_mu_alpha = get_cross_correlation_Cells(self.fC, self.fC_alpha)
-        else:
-            self.Cl_B, self.Cl_C, self.fB, self.fC = [], [], [], []
-            if self.do_alpha:
+            else:
                 self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = [], [], [], []
                 self.Cl_B_mu_alpha, self.Cl_C_mu_alpha = [], []
+
+        else:
+            self.Cl_B, self.Cl_C, self.fB, self.fC = [], [], [], []
+            self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = [], [], [], []
+            self.Cl_B_mu_alpha, self.Cl_C_mu_alpha = [], []
 
     def save_products(self):
         """ Save sim output
@@ -213,8 +216,14 @@ class QuasarSim(SubhaloSample):
         b_vec = d_lens*np.array(beta_vec) # Convert angular to physical impact parameter
         v_vec = d_lens*np.array(v_ang_vec) # Convert angular to physical velocity
         b = np.linalg.norm(b_vec) # Impact parameter
-        # M, dMdb, = self.MdMdb_NFW(b, c200_lens, M200_lens)
-        M, dMdb, _ = self.MdMdb_Gauss(b, 1.2*kpc, M200_lens)
+        if self.sh_profile == "NFW":
+            MdMdb_func = self.MdMdb_NFW
+        elif self.sh_profile == "Plummer":
+            MdMdb_func = self.MdMdb_Plummer
+        elif self.sh_profile == "Gaussian":
+            MdMdb_func = self.MdMdb_Gauss
+
+        M, dMdb, _ = MdMdb_func(b, c200_lens, M200_lens)
         b_unit_vec = b_vec/b # Convert angular to physical impact parameter
         b_dot_v = np.dot(b_unit_vec, v_vec)
         factor = (dMdb/b*b_unit_vec*b_dot_v 
@@ -235,8 +244,13 @@ class QuasarSim(SubhaloSample):
         b_vec = d_lens*np.array(beta_vec) # Convert angular to physical impact parameter
         v_vec = d_lens*np.array(v_ang_vec) # Convert angular to physical velocity
         b = np.linalg.norm(b_vec) # Impact parameter
-        # M, dMdb, d2Mdb2 = self.MdMdb_NFW(b, c200_lens, M200_lens)
-        M, dMdb, d2Mdb2 = self.MdMdb_Gauss(b, 1.2*kpc, M200_lens)
+        if self.sh_profile == "NFW":
+            MdMdb_func = self.MdMdb_NFW
+        elif self.sh_profile == "Plummer":
+            MdMdb_func = self.MdMdb_Plummer
+        elif self.sh_profile == "Gaussian":
+            MdMdb_func = self.MdMdb_Gauss
+        M, dMdb, d2Mdb2 = MdMdb_func(b, c200_lens, M200_lens)
         b_unit_vec = b_vec/b # Convert angular to physical impact parameter
         b_dot_v = np.dot(b_unit_vec, v_vec)
         factor = (6 * b_vec * b_dot_v ** 2 * M - 2 * b * ((2 * v_vec * b_dot_v
@@ -298,16 +312,15 @@ class QuasarSim(SubhaloSample):
 
         return M, dMdb, d2Mdb2
 
-    # TODO
-    # def MdMdb_Plummer(self, b, R0, M0):
-    #     """ Mass and derivative within a cylinder of radius `b`
-    #         for a Plummer lens
-    #         :param b: cylinder radius, in natural units
-    #         :param R0: characteristic radius of lens
-    #         :param M0: mass of lens
-    #     """
-    #     M = 
-    #     dMdb = 
-    #     d2Mdb2 = 
+    def MdMdb_Plummer(self, b, R0, M0):
+        """ Mass and derivative within a cylinder of radius `b`
+            for a Plummer lens
+            :param b: cylinder radius, in natural units
+            :param R0: characteristic radius of lens
+            :param M0: mass of lens
+        """
+        M = (b**2*M0)/(b**2 + R0**2)
+        dMdb = -((2*b**3*M0)/(b**2 + R0**2)**2) + (2*b*M0)/(b**2 + R0**2)
+        d2Mdb2 = -((8*b**2*M0)/(b**2 + R0**2)**2) + (2*M0)/(b**2 + R0**2) + b**2*M0*((8*b**2)/(b**2 + R0**2)**3 - 2/(b**2 + R0**2)**2)
 
-    #     return M, dMdb, d2Mdb2
+        return M, dMdb, d2Mdb2
