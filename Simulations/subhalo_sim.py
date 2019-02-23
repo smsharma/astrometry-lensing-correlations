@@ -93,7 +93,7 @@ class SubhaloSample:
     def get_r_sample(self):
         """ Sample Galactocentric radii
         """
-        r_vals = np.linspace(1e-5,1000,10000)*kpc
+        r_vals = np.linspace(1,1000,10000)*kpc
         if self.sh_distrib == 'Aq1':
             rho_r = self.rho_ein
         elif self.sh_distrib == 'MW':
