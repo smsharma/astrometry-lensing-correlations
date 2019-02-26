@@ -1,0 +1,208 @@
+import sys
+sys.path.append("../Simulations/")
+
+import numpy as np
+from units import *
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+
+class FisherForecast:
+    def __init__(self, parameters, observation):
+        
+        self.c_l_mu_fid, self.c_l_alpha_fid, self.l_min, self.l_max, *self.parameters = parameters
+        self.observation = observation
+        self.n_pars_tot = 0
+        self.n_pars_vary = 0
+        
+        self.setup_pars()
+        self.setup_tracers()
+        self.get_fisher()
+        self.get_sigmas()
+        
+    def setup_pars(self):
+        
+        self.l_ary = np.arange(self.l_min, self.l_max)
+    
+        self.n_pars_tot = len(self.parameters)
+        
+        self.pars_vary = []
+        for par in self.parameters:
+            if par.vary:
+                self.n_pars_vary += 1
+                self.pars_vary.append(par)
+        
+    
+    def setup_tracers(self):
+
+        self.n_tracers = 0
+        self.l_min_arr = []
+        self.l_max_arr = []
+        self.c_l_fid_ary = []
+        self.c_l_p_ary = []
+        self.c_l_m_ary = []
+        self.N_l_ary = []
+        
+
+        if self.observation.has_mu:
+            self.n_tracers += 1
+            self.l_min_arr.append(self.observation.l_min_mu)
+            self.l_max_arr.append(self.observation.l_max_mu)
+            self.c_l_fid_ary.append(self.c_l_mu_fid)
+            self.N_l_ary.append(np.ones_like(self.l_ary)*self.observation.N_l_mu_val)
+            self.c_l_p_ary.append([par.C_l_mu_p for par in self.pars_vary])
+            self.c_l_m_ary.append([par.C_l_mu_m for par in self.pars_vary])
+
+        if self.observation.has_alpha:
+            self.n_tracers += 1
+            self.l_min_arr.append(self.observation.l_min_alpha)
+            self.l_max_arr.append(self.observation.l_max_alpha)
+            self.c_l_fid_ary.append(self.c_l_alpha_fid)
+            self.N_l_ary.append(np.ones_like(self.l_ary)*self.observation.N_l_alpha_val)
+            self.c_l_p_ary.append([par.C_l_alpha_p for par in self.pars_vary])
+            self.c_l_m_ary.append([par.C_l_alpha_m for par in self.pars_vary])
+
+        self.cl_fid_ary = np.zeros([len(self.l_ary), self.n_tracers, self.n_tracers])
+        self.cl_noise_ary = np.zeros([len(self.l_ary), self.n_tracers, self.n_tracers])
+        self.dcldpar_ary = np.zeros([self.n_pars_vary, len(self.l_ary), self.n_tracers, self.n_tracers])
+        
+        for itr in range(self.n_tracers):
+            self.cl_fid_ary[:, itr, itr] = self.c_l_fid_ary[itr]
+            self.cl_noise_ary[:, itr, itr] = self.N_l_ary[itr]
+
+            for ipar, par in enumerate(self.pars_vary):
+                self.dcldpar_ary[ipar, :, itr, itr] = (self.c_l_p_ary[itr][ipar] - self.c_l_m_ary[itr][ipar])/(2*par.dpar)
+                
+    def get_fisher(self):
+        
+        self.fshr_l = np.zeros([self.n_pars_vary, self.n_pars_vary, len(self.l_ary)])
+        self.fshr_cls = np.zeros([self.n_pars_vary, self.n_pars_vary])
+
+        for il, ell in enumerate(self.l_ary):
+            indices=np.where((self.l_min_arr<=ell) & (self.l_max_arr>=ell))[0]
+            cl_fid = self.cl_fid_ary[il,indices,:][:,indices]
+            cl_noise = self.cl_noise_ary[il,indices,:][:,indices]
+            icl = np.linalg.inv(cl_fid+cl_noise)
+            for i in np.arange(self.n_pars_vary):
+                dcl1 = self.dcldpar_ary[i,il,indices,:][:,indices]
+                for j in np.arange(self.n_pars_vary-i)+i :
+                    dcl2 = self.dcldpar_ary[j,il,indices,:][:,indices]
+                    self.fshr_l[i,j,il] = self.observation.fsky*(ell + 0.5)*np.trace(np.dot(dcl1,np.dot(icl,np.dot(dcl2,icl))))
+                    if i != j :
+                        self.fshr_l[j,i,il] = self.fshr_l[i,j,il]
+
+        self.fshr_cls[:,:] = np.sum(self.fshr_l,axis=2)
+        
+    def get_sigmas(self):
+        fshr = self.fshr_cls
+        covar=np.linalg.inv(fshr)
+        for i in np.arange(self.n_pars_vary):
+            sigma_m=np.sqrt(covar[i,i])
+            print(sigma_m)
+
+    def plot_fisher(self, fishermat, fc, lc, lw):
+        f, ax = plt.subplots() 
+
+        sig0_max=0
+        sig1_max=0
+
+        for i in range(len(fishermat)):
+            covar=np.linalg.inv(fishermat[i])
+        #     covar=np.zeros([2,2])
+        #     covar[0,0]=covar_full[i1,i1]
+        #     covar[0,1]=covar_full[i1,i2]
+        #     covar[1,0]=covar_full[i2,i1]
+        #     covar[1,1]=covar_full[i2,i2]
+
+
+            sig0=np.sqrt(covar[0,0])
+            sig1=np.sqrt(covar[1,1])
+
+            if sig0>=sig0_max :
+                sig0_max=sig0
+            if sig1>=sig1_max :
+                sig1_max=sig1
+
+            w,v=np.linalg.eigh(covar)
+            angle=180*np.arctan2(v[1,0],v[0,0])/np.pi
+            a_1s=np.sqrt(2.3*w[0])
+            b_1s=np.sqrt(2.3*w[1])
+            a_2s=np.sqrt(6.17*w[0])
+            b_2s=np.sqrt(6.17*w[1])
+
+            centre=np.array([0.2, 3.3])
+
+
+            e_1s=Ellipse(xy=centre,width=2*a_1s,height=2*b_1s,angle=angle,
+                        facecolor=fc[i],linewidth=lw[i],edgecolor=lc[i])
+            e_2s=Ellipse(xy=centre,width=2*a_2s,height=2*b_2s,angle=angle,linestyle="dashed",
+                        facecolor=fc[i],linewidth=lw[i]/2.,edgecolor=lc[i])
+
+            ax.add_artist(e_2s)
+            ax.add_artist(e_1s)
+
+            nmult = 12
+            # ax.set_xlim(DM_frac_fid - nmult*dDM_frac_fid, DM_frac_fid + nmult*dDM_frac_fid)
+            # ax.set_ylim(mWDM_fid - nmult*dmWDM, mWDM_fid + nmult*dmWDM)
+
+            # ax.set_xlim([params[i1].val-fact_axis*sig0_max,
+            #              params[i1].val+fact_axis*sig0_max])
+            # ax.set_ylim([params[i2].val-fact_axis*sig1_max,
+            #              params[i2].val+fact_axis*sig1_max])
+            ax.set_xlabel('$f_\mathrm{DM}$')
+            ax.set_ylabel('$m_\mathrm{wDM}\,$ [keV]')
+
+            # ax.axvline(DM_frac_fid, ls='dotted', c='grey', lw=0.5)
+            # ax.axhline(mWDM_fid, ls='dotted', c='grey', lw=0.5)
+
+        # plt.title("$\sigma_\mu = 1\,\mu$as/yr, $N_\mathrm{q}=10^9$")
+        # plt.tight_layout()
+        # plt.savefig("wDM.pdf")
+
+class Parameter:
+    def __init__(self, name='fDM', 
+                 fid_val=0.2, dpar=0.02, vary=True, 
+                 C_l_mu_p=None, C_l_mu_m=None,
+                 C_l_alpha_p=None, C_l_alpha_m=None,
+                 l_min=1, l_max=1000,
+                 name_tex='$\\f_\mathrm{DM}$'):
+        self.name = name
+        self.fid_val = fid_val
+        self.dpar = dpar
+        self.vary = vary
+        
+        self.C_l_mu_p = C_l_mu_p
+        self.C_l_mu_m = C_l_mu_m
+    
+        self.C_l_alpha_p = C_l_alpha_p
+        self.C_l_alpha_m = C_l_alpha_m
+
+        self.l_min = l_min
+        self.l_max = l_max
+
+class AstrometryObservation:
+    def __init__(self, fsky=1., sigma_mu=1, sigma_alpha=None, N_q=1e9, 
+                 l_min_mu=1, l_max_mu=1000,
+                 l_min_alpha=1, l_max_alpha=1000):
+        self.fsky = fsky
+        
+        self.l_min_mu = l_min_mu
+        self.l_max_mu = l_max_mu
+        
+        self.l_min_alpha = l_min_alpha
+        self.l_max_alpha = l_max_alpha
+        
+        self.l_ary_mu = np.arange(l_min_mu, l_max_mu)
+        self.l_ary_alpha = np.arange(l_min_alpha, l_max_alpha)
+
+        self.sigma_mu = sigma_mu
+        self.sigma_alpha = sigma_alpha
+        
+        self.has_mu = False
+        self.has_alpha = False
+        
+        if self.sigma_mu is not None:
+            self.has_mu = True
+            self.N_l_mu_val = sigma_mu**2/N_q
+        if self.sigma_alpha is not None:
+            self.has_alpha = True
+            self.N_l_alpha_val = sigma_alpha**2/N_q
