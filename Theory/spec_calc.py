@@ -1,183 +1,228 @@
 ## TODO: 
-# - Add precompute for other profiles
-# - Add more concentration-mass, spatial distribution, mass functions etc
-# - Can incorporate distance-dependent c?
-# - Create separate class for distributions
-# - Judicious choise of interpolation parameters
+# - Fisher plotting function
+# - Which parameters to vary? (minimum subhalo mass)
+# - One sided Fisher
+# - Limit-setting with Fisher
 
 import sys
+import os
 sys.path.append("../Simulations/")
 
 import numpy as np
+import mpmath as mp
 from scipy.special import erf, jn, jv, kn
 from scipy.interpolate import interp2d
-import mpmath as mp
+from scipy.integrate import quad, nquad
 from tqdm import *
 
 from units import *
+from profiles import Profiles
 
-class PowerSpectra:
-    def __init__(self, precompute_NFW):
-        if self.precompute_NFW:
-            self.procompute_NFW_MjdivM0()
+class PowerSpectra(Profiles):
+    """ Class to calculate expected power spectra from astrometric induced velocities and accelerations
+       
+        :param precompute: List of profiles to precompute arrays for to speed up computation ['Burk', 'NFW']
+    """
+    def __init__(self, precompute=['Burk', 'NFW']):
 
-    def F(self, x):
-        """ Helper function for NFW deflection, from astro-ph/0102341
-        """
-        if x > 1:
-            return mp.atan(mp.sqrt(x**2-1))/(mp.sqrt(x**2 - 1))
-        elif x == 1:
-            return 1
-        elif x < 1:
-            return mp.atanh(mp.sqrt(1-x**2))/(mp.sqrt(1-x**2))
-        
-    def Ft(self, x, tau):
-        """ Helper function for truncated NFW deflection
-        """
-        return tau**2/(tau**2 + 1)**2*((tau**2 + 1 + 2*(x**2 - 1))*self.F(x) + tau*mp.pi + (tau**2 - 1)*mp.log(tau) + mp.sqrt(tau**2 + x**2)*(-mp.pi + (tau**2 - 1)/tau*self.L(x, tau)))
+        Profiles.__init__(self)
 
-    def L(self, x, tau):
-        """ Helper function for truncated NFW deflection
-        """
-        return mp.log(x/(mp.sqrt(tau**2 + x**2) + tau))
+        # Precompute arrays to speed up computation
+        if 'Burk' in precompute:
+            self.precompute_MBurkdivM0()
+        if 'NFW' in precompute:
+            self.precompute_MNFWdivM0()
 
-    def Fb(self, x):
-        """ Helper function for Burkert deflection
-        """
-        if x > 1:
-            return mp.log(x/2.) + mp.pi/4.*(mp.sqrt(x**2 + 1) - 1) + mp.sqrt(x**2 + 1)/2*mp.acoth(mp.sqrt(x**2 + 1)) - 0.5*mp.sqrt(x**2 - 1)*mp.atan(mp.sqrt(x**2 - 1))
-        elif x == 1:
-            return -mp.log(2.) - mp.pi/4. + 1/(2*mp.sqrt(2))*(mp.pi + mp.log(3 + 2*mp.sqrt(2)))
-        elif x < 1:
-            return mp.log(x/2.) + mp.pi/4.*(mp.sqrt(x**2 + 1) - 1) + mp.sqrt(x**2 + 1)/2*mp.acoth(mp.sqrt(x**2 + 1)) + 0.5*mp.sqrt(1 - x**2)*mp.atanh(mp.sqrt(1 - x**2))
-
-    ################################################################################
-
-    def MGauss(self, theta, M0, beta0):
-        """ Enclosed mass in cylinder, Gaussian profile
-        """
-        return M0*(1-mp.exp(-theta**2/(2*beta0**2)))
-
-    def MPlumm(self, theta, M0, beta0):
-        """ Enclosed mass in cylinder, Plummer profile
-        """
-        return M0*theta**2/(theta**2 + beta0**2)
-
-    ################################################################################
-
-    def MNFWdivM0(self, x):
-        """ Enclosed mass in cylinder, NFW profile
-        """
-        return (mp.log(x/2) + self.F(x))
-
-
-    def MtNFWdivM0(self, x, tau=15.):
-        """ Enclosed mass in cylinder, NFW profile
-        """
-        return self.Ft(x, tau)
-
-    def MBurkdivM0(self, x):
-        """ Enclosed mass in cylinder, NFW profile
-        """
-        return self.Fb(x)
-
-    ################################################################################
+    ##################################################
+    # Induced velocity/acceleration power spectra
+    ##################################################
 
     def Cl_Gauss(self, R0, M0, Dl, v, l):
+        """ Induced velocity power spectrum for Gaussian lens
+            :param R0: size of lens
+            :param M0: mass of lens
+            :param Dl: (physical) distance to lens
+            :param v: (physical) velocity of lens in projection transverse to los
+            :param l: multipole
+        """
         beta0 = R0/Dl
         return (4*GN*M0*v/Dl**2)**2*np.pi/2.*np.exp(-l**2*beta0**2)
 
     def Cl_Plummer(self, R0, M0, Dl, v, l):
+        """ Induced velocity power spectrum for Plummer lens
+            :param R0: size of lens
+            :param M0: mass of lens
+            :param Dl: (physical) distance to lens
+            :param v: (physical) velocity of lens in projection transverse to los
+            :param l: multipole
+        """
         beta0 = R0/Dl
         return (4*GN*M0*v/Dl**2)**2*np.pi/2.*l**2*beta0**2*kn(1, l*beta0)**2
 
-    def Cl_Point(R0, M0, Dl, v, l):
+    def Cl_Point(self, M0, Dl, v, l):
+        """ Induced velocity power spectrum for point lens
+            :param M0: mass of lens
+            :param Dl: (physical) distance to lens
+            :param v: (physical) velocity of lens in projection transverse to los
+            :param l: multipole
+        """
         return (4*GN*M0*v/Dl**2)**2*np.pi/2.
 
-    ################################################################################
-
-    def Cl_NFW(self, M200, Dl, v, l):
-        r_s, rho_s = self.get_rs_rhos_NFW(M200)
+    def Cl_NFW(self, M200, Dl, v, l, Rsub=None):
+        """ Induced velocity power spectrum for NFW lens
+            :param M200: M200 of NFW lens
+            :param Dl: (physical) distance to lens
+            :param v: (physical) velocity of lens in projection transverse to los
+            :param l: multipole
+        """
+        if self.c200_model is self.c200_Moline:
+            kwargs = {'xsub':Rsub/R200_MW}
+        else:
+            kwargs = {}
+        r_s, rho_s = self.get_rs_rhos_NFW(M200, **kwargs)
         M0 = 4*np.pi*r_s**3*rho_s
         pref = GN**2*v**2*8*np.pi*l**2/Dl**4
         theta_s = r_s/Dl
         if not self.precompute_NFW:
             MjdivM0 = self.MNFWdivM0_integ(theta_s, l)
         else:
-            MjdivM0 = 10**self.MjdivM0_integ_interp(np.log10(l), np.log10(theta_s))[0]
+            MjdivM0 = 10**self.MNFWdivM0_integ_interp(np.log10(l), np.log10(theta_s))[0]
         return pref*M0**2*MjdivM0**2
 
-    def MNFWdivM0_integ(self,theta_s, l):
-        return mp.quadosc(lambda theta: self.MNFWdivM0(theta/theta_s)*mp.j1(l*theta), [0, mp.inf], period=2*mp.pi/l)
-
-    def procompute_NFW_MjdivM0(self):
-        l_min, l_max = 1, 2000
-        n_l = 20
-        l_ary = np.logspace(np.log10(l_min), np.log10(l_max), n_l)
-
-        theta_s_min, theta_s_max = 0.001, 5
-        n_theta_s = 20
-        theta_s_ary = np.logspace(np.log10(theta_s_min), np.log10(theta_s_max), n_theta_s)
-
-        MjdivM0_integ_ary = np.zeros((n_theta_s, n_l))
-
-        for itheta_s, theta_s in enumerate(tqdm_notebook(theta_s_ary)):
-            for il, l in enumerate((l_ary)):
-                MjdivM0_integ_ary[itheta_s, il] = self.MNFWdivM0_integ(theta_s, l)
-
-        self.MjdivM0_integ_interp = interp2d(np.log10(l_ary), np.log10(theta_s_ary), np.log10(MjdivM0_integ_ary), kind='linear')
-
     def Cl_tNFW(self, M200, Dl, v, l, tau=15.):
+        """ Induced velocity power spectrum for truncated NFW lens
+            :param M200: M200 of NFW lens
+            :param Dl: (physical) distance to lens
+            :param v: (physical) velocity of lens in projection transverse to los
+            :param l: multipole
+            :param tau: ratio of truncation and scale radii
+        """
         r_s, rho_s = self.get_rs_rhos_NFW(M200)
         M0 = 4*np.pi*r_s**3*rho_s
         pref = GN**2*v**2*8*np.pi*l**2/Dl**4
         theta_s = r_s/Dl
         MjdivM0 = mp.quadosc(lambda theta: self.MtNFWdivM0(theta/theta_s, tau)*mp.j1(l*theta), [0, mp.inf], period=2*mp.pi/l)
-
         return pref*M0**2*MjdivM0**2
 
     def Cl_Burk(self, M200, Dl, v, l, p=0.7):
+        """ Induced velocity power spectrum for Burkert lens
+            :param M200: M200 of NFW lens
+            :param Dl: (physical) distance to lens
+            :param v: (physical) velocity of lens in projection transverse to los
+            :param l: multipole
+            :param p: ratio of NFW and Burkert concentrations
+        """
         r_b, rho_b = self.get_rb_rhob_Burk(M200, p)
         M0 = 4*np.pi*r_b**3*rho_b
         pref = GN**2*v**2*8*np.pi*l**2/Dl**4
         theta_b = r_b/Dl
-        MjdivM0 = mp.quadosc(lambda theta: self.MBurkdivM0(theta/theta_b)*mp.j1(l*theta), [0, mp.inf], period=2*mp.pi/l)
-
+        if not self.precompute_Burk:
+            MjdivM0 = self.MBurkdivM0_integ(theta_b, l)
+        else:
+            MjdivM0 = 10**self.MBurkdivM0_integ_interp(np.log10(l), np.log10(theta_b))[0]
         return pref*M0**2*MjdivM0**2
 
-    ################################################################################
+class PowerSpectraPopulations(PowerSpectra):
+    """ Class to calculate expected power spectra from astrometric induced velocities and accelerations
+       
+        :param precompute: List of profiles to precompute arrays for to speed up computation ['Burk', 'NFW']
+    """
+    def __init__(self, l_min=1, l_max=2000, n_l=50, R_min=1*kpc, R_max=200*kpc):
 
-    def get_rs_rhos_NFW(self, M200):
-        """ Get NFW scale radius and density
-        """
-        c200 = self.c200_SC(M200/M_s)
-        r200 = (M200/(4/3.*np.pi*200*rho_c))**(1/3.)
-        rho_s = M200/(4*np.pi*(r200/c200)**3*(np.log(1 + c200) - c200/(1 + c200)))
-        r_s = r200/c200
-        return r_s, rho_s
+        PowerSpectra.__init__(self)
 
-    def get_rb_rhob_Burk(self, M200, p):
-        """ Get Burkert scale radius and density
-        """
-        c200n = self.c200_SC(M200/M_s)
-        c200b = c200n/p
-        r200 = (M200/(4/3.*mp.pi*200*rho_c))**(1/3.)
-        r_b = r200/c200b
-        rho_b = M200/(r_b**3*mp.pi*(-2*mp.atan(c200b) + mp.log((1+c200b)**2*(1+c200b**2))))
-        return r_b, rho_b
+        self.l_min = 1
+        self.l_max = 2000
+        self.n_l = 50
 
-    ################################################################################
+        self.l_ary = np.arange(self.l_min,self.l_max)
+        self.l_ary_calc = np.logspace(np.log10(self.l_min), np.log10(self.l_max), self.n_l)  
 
-    def R0_VL(self, M0):
-        """ Concentration-mass relation for Plummer profile from 1711.03554
-        """
-        return 1.2*kpc*(M0/(1e8*M_s))**0.5
+        self.calc_v_proj_mean_integrals()
+        # self.set_mass_function()
 
-    def c200_SC(self, M200):
-        """ Concentration-mass relation according to Sanchez-Conde&Prada14
-        """
-        x=np.log(M200*h) # Given in terms of M_s/h in S-C&P paper
-        pars=[37.5153, -1.5093, 1.636e-2, 3.66e-4, -2.89237e-5, 5.32e-7][::-1]
-        return np.polyval(pars, x)
+    def set_radial_distribution(self, rho_R, R_min, R_max, **kwargs):
 
-    ################################################################################
+        self.rho_R = rho_R
+        self.rho_R_kwargs = kwargs
+
+
+        self.R_min = R_min
+        self.R_max = R_max
+
+        self.norm_rho_R = nquad(lambda l, theta: rho_R(np.sqrt(l**2 + Rsun**2 - 2*l*Rsun*np.cos(theta)), **self.rho_M_kwargs), [[R_min,R_max],[0,2*np.pi]])[0]
+
+    def set_mass_distribution(self, rho_M, f_DM, M_min, M_max, **kwargs):
+        # TODO: Stabilize distributions
+
+        self.rho_M = rho_M
+        self.rho_M_kwargs = kwargs
+
+        self.M_min = M_min
+        self.M_max = M_max
+
+        self.norm_rho_M = quad(lambda M: self.rho_M(M, **self.rho_M_kwargs), M_min, M_max)[0]
+        self.M_mean = quad(lambda M: M*self.rho_M(M, **self.rho_M_kwargs), M_min, M_max)[0]/self.norm_rho_M
+        self.N_halos = f_DM/(self.M_mean/(1e12*M_s))
+
+    def set_subhalo_properties(self, c200_model):
+
+        self.c200_model = c200_model
+
+    def calc_v_proj_mean_integrals(self):
+
+        vsun = np.array([11.*Kmps, 232.*Kmps, 7.*Kmps])
+
+        print("Calculating velocity integrals")
+
+        # Mean projected v**2 for velocity integral
+        self.vsq_proj_mean = 3.680502364741616e-07
+ #nquad(lambda v, theta, phi: (v/2.)**2*v**2*np.sin(theta)*self.rho_v_SHM(v*np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)]) + vsun + self.vE(150)), [[0,950.*Kmps],[0,np.pi],[0,2*np.pi]])[0]
+
+        # Mean projected v**4 for acceleration integral
+        # TODO: Need to improve accuracy!
+        self.v4_proj_mean = 2.039716181028691e-13
+ #nquad(lambda v, theta, phi: (v/2.)**4*v**2*np.sin(theta)*self.rho_v_SHM(v*np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)]) + vsun + self.vE(150)), [[0,950.*Kmps],[0,np.pi],[0,2*np.pi]])[0]
+
+    def integrand(self, x, ell, accel=False):
+        
+        logl, theta, logm = x[0], x[1], x[2]
+        m = np.exp(logm)*M_s
+        l = np.exp(logl)*kpc
+        
+        if accel:
+            pref = (3/64)*ell**2/l**2
+            units = (1e-6*asctorad/Year**2)**2
+        else:
+            pref = 1
+            units = (1e-6*asctorad/Year)**2
+
+        Rcen = np.sqrt(l**2 + Rsun**2 - 2*l*Rsun*np.cos(theta))
+        return pref*l*m*self.Cl_NFW(m, l, 1, ell, Rcen) / units  * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(Rcen, **self.rho_R_kwargs)
+
+    def C_l_total(self, ell, theta_deg_mask = 10, accel=False):
+        
+        theta_rad_mask = np.deg2rad(theta_deg_mask)
+
+        logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 20)
+        theta_integ_ary = np.linspace(theta_rad_mask, 2*np.pi-theta_rad_mask, 20)
+        logM_integ_ary = np.linspace(np.log(self.M_min/M_s), np.log(self.M_max/M_s), 20)
+
+        measure = (logR_integ_ary[1] - logR_integ_ary[0])*(theta_integ_ary[1] - theta_integ_ary[0])*(logM_integ_ary[1] - logM_integ_ary[0])
+        integ = 0
+        for logl in logR_integ_ary:
+            for theta in theta_integ_ary:
+                for logM in logM_integ_ary:
+                    integ += self.integrand([logl, theta, logM], ell, accel)
+        integ *= measure
+
+        if accel:
+            v_term = self.v4_proj_mean
+        else:
+            v_term = self.vsq_proj_mean
+
+        return self.N_halos * integ * v_term / self.norm_rho_M / self.norm_rho_R
+
+    def get_C_l_total_ary(self, theta_deg_mask = 10, accel=False):
+        C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask = 10, accel=False) for ell in tqdm_notebook(self.l_ary_calc)]
+        self.C_l_ary = 10**np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))

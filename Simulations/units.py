@@ -36,6 +36,8 @@ GN = 6.67e-11*Meter**3/Kilogram/Sec**2
 h = 0.7
 H_0 = 100*h*(Kmps/Mpc)
 rho_c = 3*H_0**2/(8*np.pi*GN)
+Rsun = 8.*kpc
+R200_MW = 200.*kpc
 
 # To get velocity of Earth
 vE0 = 29.79
