@@ -81,6 +81,7 @@ class FisherForecast:
             indices=np.where((self.l_min_arr<=ell) & (self.l_max_arr>=ell))[0]
             cl_fid = self.cl_fid_ary[il,indices,:][:,indices]
             cl_noise = self.cl_noise_ary[il,indices,:][:,indices]
+            # print(cl_fid, cl_noise)
             icl = np.linalg.inv(cl_fid+cl_noise)
             for i in np.arange(self.n_pars_vary):
                 dcl1 = self.dcldpar_ary[i,il,indices,:][:,indices]
@@ -97,66 +98,6 @@ class FisherForecast:
         covar=np.linalg.inv(fshr)
         for i in np.arange(self.n_pars_vary):
             sigma_m=np.sqrt(covar[i,i])
-            print(sigma_m)
-
-    def plot_fisher(self, fishermat, fc, lc, lw):
-        f, ax = plt.subplots() 
-
-        sig0_max=0
-        sig1_max=0
-
-        for i in range(len(fishermat)):
-            covar=np.linalg.inv(fishermat[i])
-        #     covar=np.zeros([2,2])
-        #     covar[0,0]=covar_full[i1,i1]
-        #     covar[0,1]=covar_full[i1,i2]
-        #     covar[1,0]=covar_full[i2,i1]
-        #     covar[1,1]=covar_full[i2,i2]
-
-
-            sig0=np.sqrt(covar[0,0])
-            sig1=np.sqrt(covar[1,1])
-
-            if sig0>=sig0_max :
-                sig0_max=sig0
-            if sig1>=sig1_max :
-                sig1_max=sig1
-
-            w,v=np.linalg.eigh(covar)
-            angle=180*np.arctan2(v[1,0],v[0,0])/np.pi
-            a_1s=np.sqrt(2.3*w[0])
-            b_1s=np.sqrt(2.3*w[1])
-            a_2s=np.sqrt(6.17*w[0])
-            b_2s=np.sqrt(6.17*w[1])
-
-            centre=np.array([0.2, 3.3])
-
-
-            e_1s=Ellipse(xy=centre,width=2*a_1s,height=2*b_1s,angle=angle,
-                        facecolor=fc[i],linewidth=lw[i],edgecolor=lc[i])
-            e_2s=Ellipse(xy=centre,width=2*a_2s,height=2*b_2s,angle=angle,linestyle="dashed",
-                        facecolor=fc[i],linewidth=lw[i]/2.,edgecolor=lc[i])
-
-            ax.add_artist(e_2s)
-            ax.add_artist(e_1s)
-
-            nmult = 12
-            # ax.set_xlim(DM_frac_fid - nmult*dDM_frac_fid, DM_frac_fid + nmult*dDM_frac_fid)
-            # ax.set_ylim(mWDM_fid - nmult*dmWDM, mWDM_fid + nmult*dmWDM)
-
-            # ax.set_xlim([params[i1].val-fact_axis*sig0_max,
-            #              params[i1].val+fact_axis*sig0_max])
-            # ax.set_ylim([params[i2].val-fact_axis*sig1_max,
-            #              params[i2].val+fact_axis*sig1_max])
-            ax.set_xlabel('$f_\mathrm{DM}$')
-            ax.set_ylabel('$m_\mathrm{wDM}\,$ [keV]')
-
-            # ax.axvline(DM_frac_fid, ls='dotted', c='grey', lw=0.5)
-            # ax.axhline(mWDM_fid, ls='dotted', c='grey', lw=0.5)
-
-        # plt.title("$\sigma_\mu = 1\,\mu$as/yr, $N_\mathrm{q}=10^9$")
-        # plt.tight_layout()
-        # plt.savefig("wDM.pdf")
 
 class Parameter:
     def __init__(self, name='fDM', 

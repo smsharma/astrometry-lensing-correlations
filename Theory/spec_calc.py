@@ -150,7 +150,7 @@ class PowerSpectraPopulations(PowerSpectra):
         self.R_min = R_min
         self.R_max = R_max
 
-        self.norm_rho_R = nquad(lambda l, theta: rho_R(np.sqrt(l**2 + Rsun**2 - 2*l*Rsun*np.cos(theta)), **self.rho_M_kwargs), [[R_min,R_max],[0,2*np.pi]])[0]
+        self.norm_rho_R = nquad(lambda r, theta: 2*np.pi*np.sin(theta)*rho_R(r, **self.rho_R_kwargs), [[R_min,R_max],[0,np.pi]])[0]
 
     def set_mass_distribution(self, rho_M, f_DM, M_min, M_max, **kwargs):
         # TODO: Stabilize distributions
@@ -170,7 +170,8 @@ class PowerSpectraPopulations(PowerSpectra):
         self.c200_model = c200_model
 
     def calc_v_proj_mean_integrals(self):
-
+        # TODO: CHECK THESE!!
+        
         vsun = np.array([11.*Kmps, 232.*Kmps, 7.*Kmps])
 
         print("Calculating velocity integrals")
@@ -186,9 +187,9 @@ class PowerSpectraPopulations(PowerSpectra):
 
     def integrand(self, x, ell, accel=False):
         
-        logl, theta, logm = x[0], x[1], x[2]
+        logR, theta, logm = x[0], x[1], x[2]
         m = np.exp(logm)*M_s
-        l = np.exp(logl)*kpc
+        r = np.exp(logR)*kpc
         
         if accel:
             pref = (3/64)*ell**2/l**2
@@ -197,24 +198,24 @@ class PowerSpectraPopulations(PowerSpectra):
             pref = 1
             units = (1e-6*asctorad/Year)**2
 
-        Rcen = np.sqrt(l**2 + Rsun**2 - 2*l*Rsun*np.cos(theta))
-        return pref*l*m*self.Cl_NFW(m, l, 1, ell, Rcen) / units  * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(Rcen, **self.rho_R_kwargs)
+        l = np.sqrt(r**2 + Rsun**2 + 2*r*Rsun*np.cos(theta))
+        return pref*l*m*self.Cl_NFW(m, l, 1, ell, r) / units  * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r, **self.rho_R_kwargs)
 
-    def C_l_total(self, ell, theta_deg_mask = 10, accel=False):
+    def C_l_total(self, ell, theta_deg_mask = 2, accel=False):
         
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
         logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 20)
-        theta_integ_ary = np.linspace(theta_rad_mask, 2*np.pi-theta_rad_mask, 20)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 20)
         logM_integ_ary = np.linspace(np.log(self.M_min/M_s), np.log(self.M_max/M_s), 20)
 
         measure = (logR_integ_ary[1] - logR_integ_ary[0])*(theta_integ_ary[1] - theta_integ_ary[0])*(logM_integ_ary[1] - logM_integ_ary[0])
         integ = 0
-        for logl in logR_integ_ary:
+        for logR in logR_integ_ary:
             for theta in theta_integ_ary:
                 for logM in logM_integ_ary:
-                    integ += self.integrand([logl, theta, logM], ell, accel)
-        integ *= measure
+                    integ += np.sin(theta)*self.integrand([logR, theta, logM], ell, accel)
+        integ *= 2*np.pi*measure
 
         if accel:
             v_term = self.v4_proj_mean
@@ -226,3 +227,4 @@ class PowerSpectraPopulations(PowerSpectra):
     def get_C_l_total_ary(self, theta_deg_mask = 10, accel=False):
         C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask = 10, accel=False) for ell in tqdm_notebook(self.l_ary_calc)]
         self.C_l_ary = 10**np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
+        return self.C_l_ary
