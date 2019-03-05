@@ -75,7 +75,12 @@ class FisherForecast:
     def get_fisher(self):
         
         self.fshr_l = np.zeros([self.n_pars_vary, self.n_pars_vary, len(self.l_ary)])
+        self.fshr_prior = np.zeros([self.n_pars_vary, self.n_pars_vary])
         self.fshr_cls = np.zeros([self.n_pars_vary, self.n_pars_vary])
+
+        for ipar, par in enumerate(self.pars_vary):
+            if par.prior is not None:
+                self.fshr_prior[ipar, ipar] = 1/par.prior**2
 
         for il, ell in enumerate(self.l_ary):
             indices=np.where((self.l_min_arr<=ell) & (self.l_max_arr>=ell))[0]
@@ -94,14 +99,15 @@ class FisherForecast:
         self.fshr_cls[:,:] = np.sum(self.fshr_l,axis=2)
         
     def get_sigmas(self):
-        fshr = self.fshr_cls
+        fshr = self.fshr_cls + self.fshr_prior
         covar=np.linalg.inv(fshr)
         for i in np.arange(self.n_pars_vary):
             sigma_m=np.sqrt(covar[i,i])
+            print(sigma_m)
 
 class Parameter:
     def __init__(self, name='fDM', 
-                 fid_val=0.2, dpar=0.02, vary=True, 
+                 fid_val=0.2, dpar=0.02, prior=None, vary=True, 
                  C_l_mu_p=None, C_l_mu_m=None,
                  C_l_alpha_p=None, C_l_alpha_m=None,
                  l_min=1, l_max=1000,
@@ -109,6 +115,7 @@ class Parameter:
         self.name = name
         self.fid_val = fid_val
         self.dpar = dpar
+        self.prior = prior
         self.vary = vary
         
         self.C_l_mu_p = C_l_mu_p
