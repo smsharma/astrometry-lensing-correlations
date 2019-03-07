@@ -139,13 +139,11 @@ class PowerSpectraPopulations(PowerSpectra):
         self.l_ary_calc = np.logspace(np.log10(self.l_min), np.log10(self.l_max), self.n_l)  
 
         self.calc_v_proj_mean_integrals()
-        # self.set_mass_function()
 
     def set_radial_distribution(self, rho_R, R_min, R_max, **kwargs):
 
         self.rho_R = rho_R
         self.rho_R_kwargs = kwargs
-
 
         self.R_min = R_min
         self.R_max = R_max

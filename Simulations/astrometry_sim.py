@@ -44,7 +44,7 @@ class QuasarSim(SubhaloSample):
         else:
             self.load_gaia_quasars()
             
-        self.analysis_pipeline()
+        # self.analysis_pipeline()
 
     def analysis_pipeline(self):
         """ Run analysis sequence
@@ -54,7 +54,6 @@ class QuasarSim(SubhaloSample):
         self.get_powerspecs()
         if self.save:
             self.save_products()
-
 
     def update_sample(self, *args, **kwargs):
         """ Update subhalo population parameters and redo simulation
@@ -128,7 +127,7 @@ class QuasarSim(SubhaloSample):
         self.mu_qsrs = np.zeros((self.n_qsrs,2))
         self.alpha_qsrs = np.zeros((self.n_qsrs,2))
 
-        for i_lens in tqdm_notebook(range(self.n_sh), disable=1-self.verbose):
+        for i_lens in tqdm_notebook(range(self.N_halos), disable=1-self.verbose):
                         
             # Lens velocity
             self.pm_l_cosb_lens = self.coords_galactic.pm_l_cosb.value[i_lens]
@@ -152,10 +151,11 @@ class QuasarSim(SubhaloSample):
             self.beta_lens_qsrs_around =  np.array([beta_ary[i]*self.get_angular_sep_dir([self.coords_qsrs.l.value[idxs_qsrs_around][i], self.coords_qsrs.b.value[idxs_qsrs_around][i]], [self.l_lens, self.b_lens]) for i in (range(len(idxs_qsrs_around)))])
 
             # Grab some lens properties
-            c200_lens, m_lens, d_lens = self.c200_sample[i_lens], self.m_sample[i_lens], self.d_sample[i_lens]
+            c200_lens, m_lens, d_lens = self.c200_sample[i_lens], self.M_sample[i_lens], self.d_sample[i_lens]
 
             # Populate quasar induced velocity (and optionally accelerations) array
             for i_qsr, idx_qsr in (enumerate((idxs_qsrs_around))):
+
                 mu_qsr = self.mu(self.beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
                 self.mu_qsrs[idx_qsr] += mu_qsr
 
@@ -164,44 +164,6 @@ class QuasarSim(SubhaloSample):
                     alpha_qsr = self.alpha(self.beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
                     self.alpha_qsrs[idx_qsr] += alpha_qsr
    
-    def get_powerspecs(self):
-        """ Calculate vector spherical harmonic coefficients
-        """
-        if self.calc_powerspecs:
-            self.Cl_B, self.Cl_C, self.fB, self.fC = get_vector_alm(self.mu_qsrs[:,1], self.mu_qsrs[:,0])
-            if self.do_alpha:
-                self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = get_vector_alm(self.alpha_qsrs[:,1], self.alpha_qsrs[:,0])
-                self.Cl_B_mu_alpha = get_cross_correlation_Cells(self.fB, self.fB_alpha)
-                self.Cl_C_mu_alpha = get_cross_correlation_Cells(self.fC, self.fC_alpha)
-            else:
-                self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = [], [], [], []
-                self.Cl_B_mu_alpha, self.Cl_C_mu_alpha = [], []
-
-        else:
-            self.Cl_B, self.Cl_C, self.fB, self.fC = [], [], [], []
-            self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = [], [], [], []
-            self.Cl_B_mu_alpha, self.Cl_C_mu_alpha = [], []
-
-    def save_products(self):
-        """ Save sim output
-        """
-        np.savez(self.save_dir + '/' + self.save_tag,
-            pos_lens=[self.coords_galactic.l.value, self.coords_galactic.b.value],
-            vel_lens=[self.coords_galactic.pm_l_cosb.value, self.coords_galactic.pm_b.value],
-            mu_qsrs=np.transpose(self.mu_qsrs), # in as/yr
-            Cl_B=self.Cl_B,
-            Cl_C=self.Cl_C,
-            fB=self.fB,
-            fC=self.fC,
-            alpha_qsrs=np.transpose(self.alpha_qsrs), # in as/yr^2
-            Cl_B_alpha=self.Cl_B_alpha,
-            Cl_C_alpha=self.Cl_C_alpha,
-            fB_alpha=self.fB_alpha,
-            fC_alpha=self.fC_alpha,
-            Cl_B_mu_alpha=self.Cl_B_mu_alpha,
-            Cl_C_mu_alpha=self.Cl_C_mu_alpha
-            )
-
     def mu(self, beta_vec, v_ang_vec, c200_lens, M200_lens, d_lens):
         """ Get lens-induced velocity
 
@@ -262,65 +224,42 @@ class QuasarSim(SubhaloSample):
 
         return -factor*4*GN/(asctorad/Year**2) # Convert to as/yr
 
-    def F(self, x):
-        """ Helper function for NFW deflection, from astro-ph/0102341 eq. (48)
+    def get_powerspecs(self):
+        """ Calculate vector spherical harmonic coefficients
         """
-        if x > 1:
-            return np.arctan(np.sqrt(x**2-1))/(np.sqrt(x**2 - 1))
-        elif x == 1:
-            return 1
-        elif x < 1:
-            return np.arctanh(np.sqrt(1-x**2))/(np.sqrt(1-x**2))
+        if self.calc_powerspecs:
+            self.Cl_B, self.Cl_C, self.fB, self.fC = get_vector_alm(self.mu_qsrs[:,1], self.mu_qsrs[:,0])
+            if self.do_alpha:
+                self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = get_vector_alm(self.alpha_qsrs[:,1], self.alpha_qsrs[:,0])
+                self.Cl_B_mu_alpha = get_cross_correlation_Cells(self.fB, self.fB_alpha)
+                self.Cl_C_mu_alpha = get_cross_correlation_Cells(self.fC, self.fC_alpha)
+            else:
+                self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = [], [], [], []
+                self.Cl_B_mu_alpha, self.Cl_C_mu_alpha = [], []
 
-    def dFdx(self, x):
-        """ Helper function for NFW deflection, from astro-ph/0102341 eq. (49)
+        else:
+            self.Cl_B, self.Cl_C, self.fB, self.fC = [], [], [], []
+            self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = [], [], [], []
+            self.Cl_B_mu_alpha, self.Cl_C_mu_alpha = [], []
+
+    def save_products(self):
+        """ Save sim output
         """
-        return (1-x**2*self.F(x))/(x*(x**2-1))
+        np.savez(self.save_dir + '/' + self.save_tag,
+            pos_lens=[self.coords_galactic.l.value, self.coords_galactic.b.value],
+            vel_lens=[self.coords_galactic.pm_l_cosb.value, self.coords_galactic.pm_b.value],
+            mu_qsrs=np.transpose(self.mu_qsrs), # in as/yr
+            Cl_B=self.Cl_B,
+            Cl_C=self.Cl_C,
+            fB=self.fB,
+            fC=self.fC,
+            alpha_qsrs=np.transpose(self.alpha_qsrs), # in as/yr^2
+            Cl_B_alpha=self.Cl_B_alpha,
+            Cl_C_alpha=self.Cl_C_alpha,
+            fB_alpha=self.fB_alpha,
+            fC_alpha=self.fC_alpha,
+            Cl_B_mu_alpha=self.Cl_B_mu_alpha,
+            Cl_C_mu_alpha=self.Cl_C_mu_alpha
+            )
 
-    def d2Fdx2(self, x):
-        """ Helper function for NFW deflection, derivative of dFdx
-        """
-        return (1-3*x**2+(x**2+x**4)*self.F(x)+(x**3-x**5)*self.dFdx(x))/(x**2*(-1+x**2)**2)
 
-    def MdMdb_NFW(self, b, c200, M200):
-        """ NFW mass and derivative within a cylinder of radius `b`
-
-            :param b: cylinder radius, in natural units
-            :param c200: NFW concentration
-            :param M200: NFW mass
-            :return: mass within `b`, derivative of mass within `b` at `b`
-        """
-        delta_c = (200/3.)*c200**3/(np.log(1+c200) - c200/(1+c200)) 
-        rho_s = rho_c*delta_c 
-        r_s = (M200/((4/3.)*np.pi*c200**3*200*rho_c))**(1/3.) # NFW scale radius
-        x = b/r_s 
-        M = 4*np.pi*rho_s*r_s**3*(np.log(x/2.) + self.F(x))
-        dMdb = 4*np.pi*rho_s*r_s**2*((1/x) + self.dFdx(x))
-        d2Mdb2 = 4*np.pi*r_s**2*rho_s*(-(1/(x**2*r_s)) + self.d2Fdx2(x)/r_s)
-        return M, dMdb, d2Mdb2
-
-    def MdMdb_Gauss(self, b, R0, M0):
-        """ Mass and derivative within a cylinder of radius `b`
-            for a Gaussian lens
-            :param b: cylinder radius, in natural units
-            :param R0: characteristic radius of lens
-            :param M0: mass of lens
-        """
-        M = M0*(1-np.exp(-b**2/(2*R0**2)))
-        dMdb = (M0*b/R0**2)*np.exp(-b**2/(2*R0**2))
-        d2Mdb2 = M0*(-((b**2*np.exp(-(b**2/(2*R0**2))))/R0**4) + np.exp(-(b**2/(2*R0**2)))/R0**2)
-
-        return M, dMdb, d2Mdb2
-
-    def MdMdb_Plummer(self, b, R0, M0):
-        """ Mass and derivative within a cylinder of radius `b`
-            for a Plummer lens
-            :param b: cylinder radius, in natural units
-            :param R0: characteristic radius of lens
-            :param M0: mass of lens
-        """
-        M = (b**2*M0)/(b**2 + R0**2)
-        dMdb = -((2*b**3*M0)/(b**2 + R0**2)**2) + (2*b*M0)/(b**2 + R0**2)
-        d2Mdb2 = -((8*b**2*M0)/(b**2 + R0**2)**2) + (2*M0)/(b**2 + R0**2) + b**2*M0*((8*b**2)/(b**2 + R0**2)**3 - 2/(b**2 + R0**2)**2)
-
-        return M, dMdb, d2Mdb2

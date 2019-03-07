@@ -18,9 +18,12 @@ class Profiles:
     """
     def __init__(self):
         self.c200_model = self.c200_SCP # Set a default concentration model to start
+        self.sqrt = np.sqrt
+        self.atan = np.arctan
+        self.atanh = np.arctanh
 
     ##################################################
-    # Enclosed masses
+    # Enclosed mass functions
     ##################################################
 
     def MGauss(self, theta, M0, beta0):
@@ -49,18 +52,75 @@ class Profiles:
         return self.Fb(x)
 
     ##################################################
+    # Enclosed masses and their derivatives
+    ##################################################
+
+    def MdMdb_NFW(self, b, c200, M200):
+        """ NFW mass and derivative within a cylinder of radius `b`
+
+            :param b: cylinder radius, in natural units
+            :param c200: NFW concentration
+            :param M200: NFW mass
+            :return: mass within `b`, derivative of mass within `b` at `b`
+        """
+        delta_c = (200/3.)*c200**3/(np.log(1+c200) - c200/(1+c200)) 
+        rho_s = rho_c*delta_c 
+        r_s = (M200/((4/3.)*np.pi*c200**3*200*rho_c))**(1/3.) # NFW scale radius
+        x = b/r_s 
+        M = 4*np.pi*rho_s*r_s**3*(np.log(x/2.) + self.F(x))
+        dMdb = 4*np.pi*rho_s*r_s**2*((1/x) + self.dFdx(x))
+        d2Mdb2 = 4*np.pi*r_s**2*rho_s*(-(1/(x**2*r_s)) + self.d2Fdx2(x)/r_s)
+        return M, dMdb, d2Mdb2
+
+    def MdMdb_Gauss(self, b, R0, M0):
+        """ Mass and derivative within a cylinder of radius `b`
+            for a Gaussian lens
+            :param b: cylinder radius, in natural units
+            :param R0: characteristic radius of lens
+            :param M0: mass of lens
+        """
+        M = M0*(1-np.exp(-b**2/(2*R0**2)))
+        dMdb = (M0*b/R0**2)*np.exp(-b**2/(2*R0**2))
+        d2Mdb2 = M0*(-((b**2*np.exp(-(b**2/(2*R0**2))))/R0**4) + np.exp(-(b**2/(2*R0**2)))/R0**2)
+
+        return M, dMdb, d2Mdb2
+
+    def MdMdb_Plummer(self, b, R0, M0):
+        """ Mass and derivative within a cylinder of radius `b`
+            for a Plummer lens
+            :param b: cylinder radius, in natural units
+            :param R0: characteristic radius of lens
+            :param M0: mass of lens
+        """
+        M = (b**2*M0)/(b**2 + R0**2)
+        dMdb = -((2*b**3*M0)/(b**2 + R0**2)**2) + (2*b*M0)/(b**2 + R0**2)
+        d2Mdb2 = -((8*b**2*M0)/(b**2 + R0**2)**2) + (2*M0)/(b**2 + R0**2) + b**2*M0*((8*b**2)/(b**2 + R0**2)**3 - 2/(b**2 + R0**2)**2)
+
+        return M, dMdb, d2Mdb2
+
+    ##################################################
     # Helper functions
     ##################################################
 
     def F(self, x):
-        """ Helper function for NFW deflection, from astro-ph/0102341
+        """ Helper function for NFW deflection, from astro-ph/0102341 eq. (48)
         """
         if x > 1:
-            return mp.atan(mp.sqrt(x**2-1))/(mp.sqrt(x**2 - 1))
+            return self.atan(self.sqrt(x**2-1))/(self.sqrt(x**2 - 1))
         elif x == 1:
             return 1
         elif x < 1:
-            return mp.atanh(mp.sqrt(1-x**2))/(mp.sqrt(1-x**2))
+            return self.atanh(self.sqrt(1-x**2))/(self.sqrt(1-x**2))
+
+    def dFdx(self, x):
+        """ Helper function for NFW deflection, from astro-ph/0102341 eq. (49)
+        """
+        return (1-x**2*self.F(x))/(x*(x**2-1))
+
+    def d2Fdx2(self, x):
+        """ Helper function for NFW deflection, derivative of dFdx
+        """
+        return (1-3*x**2+(x**2+x**4)*self.F(x)+(x**3-x**5)*self.dFdx(x))/(x**2*(-1+x**2)**2)
         
     def Ft(self, x, tau):
         """ Helper function for truncated NFW deflection # TODO: cite source Mathematice nb
@@ -86,14 +146,23 @@ class Profiles:
     # Functions to precompute enclosed mass integral
     ##################################################
 
+    def set_mp():
+        """ Set mpmath functions for mp.quadosc calculations
+        """
+        self.atan = mp.atan
+        self.atanh = mp.atanh
+        self.sqrt = mp.sqrt
+
     def MNFWdivM0_integ(self,theta_s, l):
         """ Enclosed mass integral for NFW profile
         """
+        self.set_mp()
         return mp.quadosc(lambda theta: self.MNFWdivM0(theta/theta_s)*mp.j1(l*theta), [0, mp.inf], period=2*mp.pi/l)
 
     def MBurkdivM0_integ(self,theta_b, l):
         """ Enclosed mass integral for Burkert profile
         """
+        self.set_mp()
         return mp.quadosc(lambda theta: self.MBurkdivM0(theta/theta_b)*mp.j1(l*theta), [0, mp.inf], period=2*mp.pi/l)
 
     def precompute_MNFWdivM0(self, n_l=20, n_theta_s=20):
@@ -289,6 +358,11 @@ class Profiles:
         Nesc = erf(vesc/v0) - 2/np.sqrt(np.pi)*vesc/v0*np.exp(-vesc**2/v0**2)
         v = np.linalg.norm(vvec)
         return 1/(Nesc*np.pi**1.5*v0**3)*np.exp(-v**2/v0**2)*(v < vesc)
+
+    def rho_v_SHM_scalar(self, v, v0=220.*Kmps, vesc=544.*Kmps):
+        """ Normalized truncated Maxwellian velocity distribution
+        """
+        return np.exp(-v**2/v0**2)*(v < vesc)
 
     def vE(self, t):
         """ Earth velocity at day of year t 
