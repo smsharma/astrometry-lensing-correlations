@@ -147,8 +147,8 @@ class QuasarSim(SubhaloSample):
             self.b_lens = self.coords_galactic.b.value[i_lens]
 
             # Angular impact parameters of quasars around lens i_lens
-            # This can be sped up/improved!
-            self.beta_lens_qsrs_around =  np.array([beta_ary[i]*self.get_angular_sep_dir([self.coords_qsrs.l.value[idxs_qsrs_around][i], self.coords_qsrs.b.value[idxs_qsrs_around][i]], [self.l_lens, self.b_lens]) for i in (range(len(idxs_qsrs_around)))])
+            # This can be sped up/improved by vectorizing!
+            self.beta_lens_qsrs_around = np.array([beta_ary[i]*self.get_angular_sep_dir([self.coords_qsrs.l.value[idxs_qsrs_around][i], self.coords_qsrs.b.value[idxs_qsrs_around][i]], [self.l_lens, self.b_lens]) for i in (range(len(idxs_qsrs_around)))])
 
             # Grab some lens properties
             c200_lens, m_lens, d_lens = self.c200_sample[i_lens], self.M_sample[i_lens], self.d_sample[i_lens]

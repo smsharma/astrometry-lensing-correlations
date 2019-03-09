@@ -101,9 +101,8 @@ class FisherForecast:
     def get_sigmas(self):
         fshr = self.fshr_cls + self.fshr_prior
         covar=np.linalg.inv(fshr)
-        for i in np.arange(self.n_pars_vary):
-            sigma_m=np.sqrt(covar[i,i])
-            print(sigma_m)
+        for ipar, par in enumerate(self.pars_vary):
+            par.sigma = np.sqrt(covar[ipar,ipar])
 
 class Parameter:
     def __init__(self, name='fDM', 

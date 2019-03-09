@@ -14,6 +14,7 @@ from scipy.special import erf, jn, jv, kn
 from scipy.interpolate import interp2d
 from scipy.integrate import quad, nquad
 from tqdm import *
+from skmonaco import mcquad, mcimport, mcmiser
 
 from units import *
 from profiles import Profiles
@@ -101,6 +102,7 @@ class PowerSpectra(Profiles):
         M0 = 4*np.pi*r_s**3*rho_s
         pref = GN**2*v**2*8*np.pi*l**2/Dl**4
         theta_s = r_s/Dl
+        self.set_mp()
         MjdivM0 = mp.quadosc(lambda theta: self.MtNFWdivM0(theta/theta_s, tau)*mp.j1(l*theta), [0, mp.inf], period=2*mp.pi/l)
         return pref*M0**2*MjdivM0**2
 
@@ -140,6 +142,13 @@ class PowerSpectraPopulations(PowerSpectra):
 
         self.calc_v_proj_mean_integrals()
 
+    def integrand_norm(self, x):
+        """ Integrand for calculating overall normalization of 
+            joint mass-radial distribution pdf
+        """ 
+        M200, r = np.exp(x[0])*M_s, np.exp(x[1])*kpc
+        return 4*np.pi*M200*r*self.rho_M(M200)*self.rho_R(r)
+
     def set_radial_distribution(self, rho_R, R_min, R_max, **kwargs):
 
         self.rho_R = rho_R
@@ -148,9 +157,12 @@ class PowerSpectraPopulations(PowerSpectra):
         self.R_min = R_min
         self.R_max = R_max
 
-        self.norm_rho_R = nquad(lambda r, theta: 2*np.pi*np.sin(theta)*rho_R(r, **self.rho_R_kwargs), [[R_min,R_max],[0,np.pi]])[0]
 
-    def set_mass_distribution(self, rho_M, f_DM, M_min, M_max, **kwargs):
+        norm, norm_err = mcquad(self.integrand_norm,npoints=1e6,xl=[np.log(self.M_min_calib/M_s),np.log(self.R_min/kpc)],xu=[np.log(self.M_max_calib/M_s),np.log(self.R_max/kpc)],nprocs=5)
+
+        self.pref = self.N_calib / norm
+
+    def set_mass_distribution(self, rho_M, M_min, M_max, M_min_calib, M_max_calib, N_calib, **kwargs):
         # TODO: Stabilize distributions
 
         self.rho_M = rho_M
@@ -159,9 +171,10 @@ class PowerSpectraPopulations(PowerSpectra):
         self.M_min = M_min
         self.M_max = M_max
 
-        self.norm_rho_M = quad(lambda M: self.rho_M(M, **self.rho_M_kwargs), M_min, M_max)[0]
-        self.M_mean = quad(lambda M: M*self.rho_M(M, **self.rho_M_kwargs), M_min, M_max)[0]/self.norm_rho_M
-        self.N_halos = f_DM/(self.M_mean/(1e12*M_s))
+        self.M_min_calib = M_min_calib
+        self.M_max_calib = M_max_calib
+
+        self.N_calib = N_calib
 
     def set_subhalo_properties(self, c200_model):
 
@@ -190,16 +203,16 @@ class PowerSpectraPopulations(PowerSpectra):
         r = np.exp(logR)*kpc
         
         if accel:
-            pref = (3/64)*ell**2/l**2
+            pref = (3/64)*ell**2/r**2
             units = (1e-6*asctorad/Year**2)**2
         else:
             pref = 1
             units = (1e-6*asctorad/Year)**2
 
         l = np.sqrt(r**2 + Rsun**2 + 2*r*Rsun*np.cos(theta))
-        return pref*l*m*self.Cl_NFW(m, l, 1, ell, r) / units  * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r, **self.rho_R_kwargs)
+        return pref*r*m*self.Cl_NFW(m, l, 1, ell, r) / units  * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r, **self.rho_R_kwargs)
 
-    def C_l_total(self, ell, theta_deg_mask = 2, accel=False):
+    def C_l_total(self, ell, theta_deg_mask = 0, accel=False):
         
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
@@ -208,6 +221,7 @@ class PowerSpectraPopulations(PowerSpectra):
         logM_integ_ary = np.linspace(np.log(self.M_min/M_s), np.log(self.M_max/M_s), 20)
 
         measure = (logR_integ_ary[1] - logR_integ_ary[0])*(theta_integ_ary[1] - theta_integ_ary[0])*(logM_integ_ary[1] - logM_integ_ary[0])
+        
         integ = 0
         for logR in logR_integ_ary:
             for theta in theta_integ_ary:
@@ -220,9 +234,64 @@ class PowerSpectraPopulations(PowerSpectra):
         else:
             v_term = self.vsq_proj_mean
 
-        return self.N_halos * integ * v_term / self.norm_rho_M / self.norm_rho_R
+        return self.pref * integ * v_term
+
+    def dC_l_dR_total(self, ell, R, theta_deg_mask = 0, accel=False):
+        
+        theta_rad_mask = np.deg2rad(theta_deg_mask)
+
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 20)
+        logM_integ_ary = np.linspace(np.log(self.M_min/M_s), np.log(self.M_max/M_s), 20)
+
+        measure = (theta_integ_ary[1] - theta_integ_ary[0])*(logM_integ_ary[1] - logM_integ_ary[0])
+        
+        integ = 0
+        for theta in theta_integ_ary:
+            for logM in logM_integ_ary:
+                integ += np.sin(theta)*self.integrand([np.log(R/kpc), theta, logM], ell, accel)/R
+        integ *= 2*np.pi*measure
+
+        if accel:
+            v_term = self.v4_proj_mean
+        else:
+            v_term = self.vsq_proj_mean
+
+        return self.pref * integ * v_term
+
+    def dC_l_dM_total(self, ell, M, theta_deg_mask = 0, accel=False):
+        
+        theta_rad_mask = np.deg2rad(theta_deg_mask)
+
+        logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 20)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 20)
+
+        measure = (logR_integ_ary[1] - logR_integ_ary[0])*(theta_integ_ary[1] - theta_integ_ary[0])
+        
+        integ = 0
+        for logR in logR_integ_ary:
+            for theta in theta_integ_ary:
+                integ += np.sin(theta)*self.integrand([logR, theta, np.log(M/M_s)], ell, accel)/M
+        integ *= 2*np.pi*measure
+
+        if accel:
+            v_term = self.v4_proj_mean
+        else:
+            v_term = self.vsq_proj_mean
+
+        return self.pref * integ * v_term 
+
 
     def get_C_l_total_ary(self, theta_deg_mask = 10, accel=False):
         C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask = 10, accel=False) for ell in tqdm_notebook(self.l_ary_calc)]
         self.C_l_ary = 10**np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return self.C_l_ary
+
+def integ(M_min, M_max, alpha=-1.9):
+    return (M_max**(alpha + 1) - M_min**(alpha + 1))/(alpha + 1)
+    if alpha == -1:
+        return np.log(M_max) - np.log(M_min)
+
+def integ_M(M_min, M_max, alpha=-1.9):
+    if alpha == -2:
+        return np.log(M_max) - np.log(M_min)
+    return (M_max**(alpha + 2) - M_min**(alpha + 2))/(alpha + 2)

@@ -146,7 +146,7 @@ class Profiles:
     # Functions to precompute enclosed mass integral
     ##################################################
 
-    def set_mp():
+    def set_mp(self):
         """ Set mpmath functions for mp.quadosc calculations
         """
         self.atan = mp.atan
@@ -295,7 +295,7 @@ class Profiles:
         c0 = 19.9
         a = [-0.195, 0.089, 0.089]
         b = -0.54
-        c200_val = c0*(1 + np.sum([(a[i-1]*np.log10(M200/(1e8*M_s/h)))**i for i in range(1,4)])*(1 + b*np.log10(xsub)))
+        c200_val = c0*(1 + np.sum([(a[i-1]*np.log10(M200/(1e8*M_s/h)))**i for i in range(1,4)], axis=0)*(1 + b*np.log10(xsub)))
         return c200_val
 
     ##################################################

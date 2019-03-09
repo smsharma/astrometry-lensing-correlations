@@ -5,6 +5,7 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord, Galactic, Galactocentric, CartesianDifferential
 from scipy.integrate import quad
+from skmonaco import mcquad, mcimport, mcmiser
 
 import pdf_sampler
 from units import *
@@ -32,6 +33,14 @@ class SubhaloSample(Profiles):
         self.get_v_sample()
         self.get_coords_galactic()
 
+    # def integrand_norm(self, x):
+    #     """ Integrand for calculating overall normalization of 
+    #         joint mass-radial distribution pdf
+    #     """ 
+    #     M200, r = np.exp(x[0])*M_s, np.exp(x[1])*kpc
+    #     return self.rho_M(M200)*self.rho_R(r)
+
+
     def set_radial_distribution(self, rho_R, R_min, R_max, **kwargs):
 
         self.rho_R = rho_R
@@ -40,7 +49,7 @@ class SubhaloSample(Profiles):
         self.R_min = R_min
         self.R_max = R_max
 
-    def set_mass_distribution(self, rho_M, f_DM, M_min, M_max, **kwargs):
+    def set_mass_distribution(self, rho_M, M_min, M_max, M_min_calib, M_max_calib, N_calib, **kwargs):
         # TODO: Stabilize distributions
 
         self.rho_M = rho_M
@@ -49,10 +58,26 @@ class SubhaloSample(Profiles):
         self.M_min = M_min
         self.M_max = M_max
 
-        self.norm_rho_M = quad(lambda M: self.rho_M(M, **self.rho_M_kwargs), M_min, M_max)[0]
-        self.M_mean = quad(lambda M: M*self.rho_M(M, **self.rho_M_kwargs), M_min, M_max)[0]/self.norm_rho_M
-        self.N_halos = np.random.poisson(f_DM/(self.M_mean/(1e12*M_s)))
-        print("Simulating", str(self.N_halos), "subhalos between", str(self.M_min/M_s), "and",  str(self.M_max/M_s), " M_s accounting for a mass fraction of", str(f_DM))
+        self.M_min_calib = M_min_calib
+        self.M_max_calib = M_max_calib
+
+        self.N_calib = N_calib
+
+        # self.N_halos = self.N_calib*quad(lambda M: self.rho_M(M, **self.rho_M_kwargs), M_min, M_max)[0]/quad(lambda M:self.rho_M(M, **self.rho_M_kwargs), M_min_calib, M_max_calib)[0]
+        # self.N_halos = np.random.poisson(self.N_halos)
+
+        def integ(logM):
+            M = np.exp(logM)*M_s
+            return M*self.rho_M(M)
+
+        norm1, _ = mcquad(integ , npoints=1e6,xl=[np.log(self.M_min/M_s)],xu=[np.log(self.M_max/M_s)],nprocs=5)
+
+        norm2, _ = mcquad(integ, npoints=1e6,xl=[np.log(self.M_min_calib/M_s)],xu=[np.log(self.M_max_calib/M_s)],nprocs=5)
+
+
+        self.N_halos = np.random.poisson(self.N_calib * norm1 / norm2)[0]
+
+        print("Simulating", str(self.N_halos), "subhalos between", str(self.M_min/M_s), "and",  str(self.M_max/M_s))
 
     def set_subhalo_properties(self, c200_model, distdep=False):
 
@@ -62,7 +87,7 @@ class SubhaloSample(Profiles):
     def get_r_sample(self):
         """ Sample Galactocentric radii
         """
-        r_vals = np.linspace(self.R_min,self.R_max,10000)*kpc
+        r_vals = np.linspace(self.R_min,self.R_max,10000)
         rho_vals = self.rho_R(r_vals)
         r_dist = pdf_sampler.PDFSampler(r_vals, rho_vals)
         self.r_sample = r_dist(self.N_halos)
@@ -90,9 +115,9 @@ class SubhaloSample(Profiles):
         """
         if self.sh_profile == "NFW":
             if self.c200_distdep:
-                self.c200_sample = self.c200_model(self.M_sample)
-            else:
                 self.c200_sample = self.c200_model(self.M_sample, self.r_sample)
+            else:
+                self.c200_sample = self.c200_model(self.M_sample)
             self.r200_sample = (self.M_sample/(4/3.*np.pi*200*rho_c))**(1/3.)
             self.rs_sample = self.r200_sample/self.c200_sample
             self.rho_s_sample = rho_c*(200/3.)*self.c200_sample**3/(np.log(1 + self.c200_sample) - self.c200_sample/(1 + self.c200_sample))
@@ -114,7 +139,8 @@ class SubhaloSample(Profiles):
         v_E = self.vE(self.t) # Earth velocity
 
         # Rotate about x-axis to ecliptic coordinates. CHECK IF THIS IS RIGHT.
-        v_sun_E_ecliptic = CartesianDifferential(np.array([0, np.linalg.norm(v_sun + v_E), 0])*u.km/u.s)
+        # v_sun_E_ecliptic = CartesianDifferential(np.array([0, np.linalg.norm(v_sun + v_E), 0])*u.km/u.s)
+        v_sun_E_ecliptic = CartesianDifferential((v_sun + v_E)*u.km/u.s)
 
         self.coords_gc = Galactocentric(
                              x=coords_xyz[0]*self.r_sample/kpc*u.kpc,  # Scale vectors by sampled 
@@ -123,6 +149,7 @@ class SubhaloSample(Profiles):
                              v_x=self.coords_vxyz[0]/Kmps*u.km/u.s,
                              v_y=self.coords_vxyz[1]/Kmps*u.km/u.s,
                              v_z=self.coords_vxyz[2]/Kmps*u.km/u.s,
+                             # galcen_v_sun=)
                              galcen_v_sun=v_sun_E_ecliptic)
 
         self.coords_galactic = self.coords_gc.transform_to(Galactic)  # Transform to Galactic coordinates
