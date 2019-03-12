@@ -42,7 +42,7 @@ class Profiles:
         return (mp.log(x/2) + self.F(x))
 
     def MtNFWdivM0(self, x, tau=15.):
-        """ Enclosed mass in cylinder, NFW profile
+        """ Enclosed mass in cylinder, tNFW profile
         """
         return self.Ft(x, tau)
 

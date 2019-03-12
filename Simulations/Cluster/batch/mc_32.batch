@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#SBATCH -N 1   # node count
+#SBATCH --ntasks-per-node=4
+#SBATCH -t 3:00:00
+#SBATCH --mem=12GB
+
+source ~/.bashrc
+conda activate venv_smsharma 
+
+cd /home/sm8383/Lensing-PowerSpectra/Simulations
+
+
+
+python astrometry_sim_interface.py --imc 32

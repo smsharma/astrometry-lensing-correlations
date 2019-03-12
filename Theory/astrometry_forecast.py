@@ -30,7 +30,6 @@ class FisherForecast:
             if par.vary:
                 self.n_pars_vary += 1
                 self.pars_vary.append(par)
-        
     
     def setup_tracers(self):
 
