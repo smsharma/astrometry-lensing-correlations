@@ -18,7 +18,7 @@ cd /home/sm8383/Lensing-PowerSpectra/Simulations
 
 '''
 
-for imc in range(100):
+for imc in range(100,200):
     batchn = batch  + "\n"
     batchn += "python astrometry_sim_interface.py --imc " + str(imc)
     fname = "batch/mc_" + str(imc) + ".batch" 
