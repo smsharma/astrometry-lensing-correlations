@@ -371,4 +371,4 @@ class Profiles:
         nu = lambda g: g + 2*e*np.sin(g) + (5/4.)*e**2*np.sin(2*g)
         lambdaa = lambda t: lambdap + nu(g(t))
         r = lambda t: vE0/omega*(1-e**2)/(1+e*np.cos(nu(g(t))))*(np.sin(lambdaa(t))*e1 - np.cos(lambdaa(t))*e2)
-        return derivative(r,t)*Kmps
+        return derivative(r,t)
