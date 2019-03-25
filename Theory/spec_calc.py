@@ -182,10 +182,11 @@ class PowerSpectraPopulations(PowerSpectra):
 
         self.pref = self.N_calib / norm
 
-    def set_mass_distribution_compact(self, M_DM, f_DM, **kwargs):
+    def set_mass_distribution_compact(self, M_DM, R0_DM, f_DM, **kwargs):
         # TODO: Stabilize distributions
 
         self.M_DM = M_DM
+        self.R0_DM = R0_DM
         self.f_DM = f_DM
 
         norm, norm_err = mcquad(self.integrand_norm_compact,npoints=1e6,xl=[np.log(self.R_min/kpc)],xu=[np.log(self.R_max/kpc)],nprocs=5)
@@ -241,7 +242,10 @@ class PowerSpectraPopulations(PowerSpectra):
             units = (1e-6*asctorad/Year)**2
 
         l = np.sqrt(r**2 + Rsun**2 + 2*r*Rsun*np.cos(theta))
-        return pref*r*self.Cl_Point(self.M_DM, l, 1, ell) / units  * self.rho_R(r, **self.rho_R_kwargs)
+        if not self.R0_DM == 0:
+            return pref*r*self.Cl_Gauss(self, self.R0_DM, self.M_DM, l, 1, ell) / units  * self.rho_R(r, **self.rho_R_kwargs)
+        else:
+            return pref*r*self.Cl_Point(self.M_DM, l, 1, ell) / units  * self.rho_R(r, **self.rho_R_kwargs)
 
     def C_l_total(self, ell, theta_deg_mask = 0, accel=False):
         
