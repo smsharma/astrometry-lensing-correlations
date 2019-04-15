@@ -182,7 +182,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         self.pref = self.N_calib / norm
 
-    def set_mass_distribution_compact(self, M_DM, R0_DM, f_DM, **kwargs):
+    def set_mass_distribution_compact(self, M_DM, f_DM, R0_DM=0, **kwargs):
         # TODO: Stabilize distributions
 
         self.M_DM = M_DM
@@ -205,7 +205,7 @@ class PowerSpectraPopulations(PowerSpectra):
         print("Calculating velocity integrals")
 
         # Mean projected v**2 for velocity integral
-        self.vsq_proj_mean = 3.680502364741616e-07
+        self.vsq_proj_mean = np.sqrt(2)*3.680502364741616e-07
  #nquad(lambda v, theta, phi: (v/2.)**2*v**2*np.sin(theta)*self.rho_v_SHM(v*np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)]) + vsun + self.vE(150)), [[0,950.*Kmps],[0,np.pi],[0,2*np.pi]])[0]
 
         # Mean projected v**4 for acceleration integral
@@ -243,7 +243,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         l = np.sqrt(r**2 + Rsun**2 + 2*r*Rsun*np.cos(theta))
         if not self.R0_DM == 0:
-            return pref*r*self.Cl_Gauss(self, self.R0_DM, self.M_DM, l, 1, ell) / units  * self.rho_R(r, **self.rho_R_kwargs)
+            return pref*r*self.Cl_Gauss(self.R0_DM, self.M_DM, l, 1, ell) / units  * self.rho_R(r, **self.rho_R_kwargs)
         else:
             return pref*r*self.Cl_Point(self.M_DM, l, 1, ell) / units  * self.rho_R(r, **self.rho_R_kwargs)
 
@@ -251,9 +251,9 @@ class PowerSpectraPopulations(PowerSpectra):
         
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 20)
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 20)
-        logM_integ_ary = np.linspace(np.log(self.M_min/M_s), np.log(self.M_max/M_s), 20)
+        logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 50)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 50)
+        logM_integ_ary = np.linspace(np.log(self.M_min/M_s), np.log(self.M_max/M_s), 50)
 
         measure = (logR_integ_ary[1] - logR_integ_ary[0])*(theta_integ_ary[1] - theta_integ_ary[0])*(logM_integ_ary[1] - logM_integ_ary[0])
         
@@ -275,8 +275,8 @@ class PowerSpectraPopulations(PowerSpectra):
         
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 20)
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 20)
+        logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 50)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 50)
 
         measure = (logR_integ_ary[1] - logR_integ_ary[0])*(theta_integ_ary[1] - theta_integ_ary[0])
         
@@ -298,8 +298,8 @@ class PowerSpectraPopulations(PowerSpectra):
         
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 20)
-        logM_integ_ary = np.linspace(np.log(self.M_min/M_s), np.log(self.M_max/M_s), 20)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 50)
+        logM_integ_ary = np.linspace(np.log(self.M_min/M_s), np.log(self.M_max/M_s), 50)
 
         measure = (theta_integ_ary[1] - theta_integ_ary[0])*(logM_integ_ary[1] - logM_integ_ary[0])
         
@@ -320,8 +320,8 @@ class PowerSpectraPopulations(PowerSpectra):
         
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 20)
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 20)
+        logR_integ_ary = np.linspace(np.log(self.R_min/kpc), np.log(self.R_max/kpc), 50)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi-theta_rad_mask, 50)
 
         measure = (logR_integ_ary[1] - logR_integ_ary[0])*(theta_integ_ary[1] - theta_integ_ary[0])
         
@@ -340,12 +340,12 @@ class PowerSpectraPopulations(PowerSpectra):
 
 
     def get_C_l_total_ary(self, theta_deg_mask = 10, accel=False):
-        C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask = 10, accel=False) for ell in tqdm_notebook(self.l_ary_calc)]
+        C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask = 10, accel=accel) for ell in tqdm_notebook(self.l_ary_calc)]
         self.C_l_ary = 10**np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return self.C_l_ary
 
     def get_C_l_compact_total_ary(self, theta_deg_mask = 10, accel=False):
-        self.C_l_ary = len(self.l_ary)*[self.C_l_compact_total(1, theta_deg_mask = 10, accel=False)]
+        self.C_l_ary = len(self.l_ary)*[self.C_l_compact_total(1, theta_deg_mask = 10, accel=accel)]
         return np.array(self.C_l_ary)
 
 def integ(M_min, M_max, alpha=-1.9):

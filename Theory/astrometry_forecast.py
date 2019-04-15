@@ -148,7 +148,7 @@ class AstrometryObservation:
         
         if self.sigma_mu is not None:
             self.has_mu = True
-            self.N_l_mu_val = sigma_mu**2/N_q
+            self.N_l_mu_val = 4*np.pi*sigma_mu**2/N_q
         if self.sigma_alpha is not None:
             self.has_alpha = True
-            self.N_l_alpha_val = sigma_alpha**2/N_q
+            self.N_l_alpha_val = 4*np.pi*sigma_alpha**2/N_q
