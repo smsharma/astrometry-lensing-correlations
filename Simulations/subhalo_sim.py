@@ -12,15 +12,17 @@ from units import *
 from profiles import Profiles
 
 class SubhaloSample(Profiles):
-    def __init__(self, t=150., sh_profile='NFW'):
+    def __init__(self, use_v_E=False, t=150., sh_profile='NFW'):
         """ Class for generating a Galactic subhalo sample
         Args:
             t: time of year in days at which to use Earth velocity 
+            use_v_E: whether to add on Earth velocity
             sh_profile: ["NFW", "Plummer", "Gaussian"]
         """
 
         Profiles.__init__(self)
 
+        self.use_v_E = use_v_E
         self.t = t
         self.sh_profile = sh_profile
 
@@ -32,14 +34,6 @@ class SubhaloSample(Profiles):
         self.get_sh_prop()
         self.get_v_sample()
         self.get_coords_galactic()
-
-    # def integrand_norm(self, x):
-    #     """ Integrand for calculating overall normalization of 
-    #         joint mass-radial distribution pdf
-    #     """ 
-    #     M200, r = np.exp(x[0])*M_s, np.exp(x[1])*kpc
-    #     return self.rho_M(M200)*self.rho_R(r)
-
 
     def set_radial_distribution(self, rho_R, R_min, R_max, **kwargs):
 
@@ -136,11 +130,16 @@ class SubhaloSample(Profiles):
         """
         coords_xyz = self.sample_spherical(self.N_halos)  # Sample random vectors
         v_sun = np.array([11., 232., 7.]) # Velocity of the Sub in Galactocentric frame
-        v_E = self.vE(self.t) # Earth velocity
+
+        if self.use_v_E: # If want non-zero Earth velocity
+            v_E = self.vE(self.t) 
+        else:
+            v_E = np.zeros(3)
 
         # Rotate about x-axis to ecliptic coordinates. CHECK IF THIS IS RIGHT.
         # v_sun_E_ecliptic = CartesianDifferential(np.array([0, np.linalg.norm(v_sun + v_E), 0])*u.km/u.s)
-        v_sun_E_ecliptic = CartesianDifferential((v_sun + v_E)*u.km/u.s)
+        # v_sun_E_ecliptic = CartesianDifferential((v_sun + v_E)*u.km/u.s)
+        v_sun_E_ecliptic = CartesianDifferential(np.zeros(3)*u.km/u.s)
 
         self.coords_gc = Galactocentric(
                              x=coords_xyz[0]*self.r_sample/kpc*u.kpc,  # Scale vectors by sampled 
