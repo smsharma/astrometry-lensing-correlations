@@ -1,5 +1,5 @@
 import sys
-sys.path.append("../Theory")
+sys.path.append("../theory")
 
 import numpy as np
 from astropy import units as u

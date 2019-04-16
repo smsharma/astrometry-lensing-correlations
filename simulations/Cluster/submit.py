@@ -13,7 +13,7 @@ batch='''#!/bin/bash
 source ~/.bashrc
 conda activate venv_smsharma 
 
-cd /home/sm8383/Lensing-PowerSpectra/Simulations
+cd /home/sm8383/Lensing-PowerSpectra/simulations
 
 
 '''
