@@ -125,7 +125,8 @@ class Profiles:
                     x ** 2 * (-1 + x ** 2) ** 2)
 
     def Ft(self, x, tau):
-        """ Helper function for truncated NFW deflection # TODO: cite source Mathematice nb
+        """ Helper function for truncated NFW deflection
+            TODO: cite source Mathematice nb
         """
         return tau ** 2 / (tau ** 2 + 1) ** 2 * (
                     (tau ** 2 + 1 + 2 * (x ** 2 - 1)) * self.F(x) + tau * mp.pi + (tau ** 2 - 1) * mp.log(
@@ -133,11 +134,13 @@ class Profiles:
 
     def L(self, x, tau):
         """ Helper function for truncated NFW deflection
+            TODO: cite source Mathematice nb
         """
-        return mp.log(x / (mp.sqrt(tau ** 2 + x ** 2) + tau))  # TODO: cite source Mathematice nb
+        return mp.log(x / (mp.sqrt(tau ** 2 + x ** 2) + tau))
 
     def Fb(self, x):
-        """ Helper function for Burkert deflection # TODO: cite source Mathematice nb
+        """ Helper function for Burkert deflection
+            TODO: cite source Mathematice nb
         """
         if x > 1:
             return mp.log(x / 2.) + mp.pi / 4. * (mp.sqrt(x ** 2 + 1) - 1) + mp.sqrt(x ** 2 + 1) / 2 * mp.acoth(
