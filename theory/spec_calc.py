@@ -221,21 +221,15 @@ class PowerSpectraPopulations(PowerSpectra):
         self.c200_model = c200_model
 
     def calc_v_proj_mean_integrals(self):
-        # TODO: CHECK THESE!!
 
-        vsun = np.array([11. * Kmps, 232. * Kmps, 7. * Kmps])
-
-        print("Calculating velocity integrals")
+        print("Loading velocity integrals")
 
         # Mean projected v**2 for velocity integral
-        self.vsq_proj_mean = np.sqrt(2) * 3.680502364741616e-07
-        # nquad(lambda v, theta, phi: (v/2.)**2*v**2*np.sin(theta)*self.rho_v_SHM(v*np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)]) + vsun + self.vE(150)), [[0,950.*Kmps],[0,np.pi],[0,2*np.pi]])[0]
+        self.vsq_proj_mean = 5.789779157814031e-07
 
         # Mean projected v**4 for acceleration integral
-        # TODO: Need to improve accuracy!
-        self.v4_proj_mean = 2.039716181028691e-13
+        self.v4_proj_mean = 5.914900709341262e-13
 
-    # nquad(lambda v, theta, phi: (v/2.)**4*v**2*np.sin(theta)*self.rho_v_SHM(v*np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)]) + vsun + self.vE(150)), [[0,950.*Kmps],[0,np.pi],[0,2*np.pi]])[0]
 
     def integrand(self, x, ell, accel=False):
         """
