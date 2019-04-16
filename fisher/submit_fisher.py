@@ -12,7 +12,7 @@ batch='''#!/bin/bash
 
 source activate
 
-cd /home/sm8383/Lensing-PowerSpectra/Fisher
+cd /home/sm8383/Lensing-PowerSpectra/fisher
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sm8383/anaconda3/lib/
 
