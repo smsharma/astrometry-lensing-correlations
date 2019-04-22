@@ -81,7 +81,6 @@ class FisherForecast:
             indices = np.where((self.l_min_arr <= ell) & (self.l_max_arr >= ell))[0]
             cl_fid = self.cl_fid_ary[il, indices, :][:, indices]
             cl_noise = self.cl_noise_ary[il, indices, :][:, indices]
-            # print(cl_fid, cl_noise)
             icl = np.linalg.inv(cl_fid + cl_noise)
             for i in np.arange(self.n_pars_vary):
                 dcl1 = self.dcldpar_ary[i, il, indices, :][:, indices]
