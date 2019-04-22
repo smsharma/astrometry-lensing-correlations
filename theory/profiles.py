@@ -180,7 +180,7 @@ class Profiles:
         """ Precompute enclosed mass integral for NFW profile
         """
         if os.path.isfile("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + " n_theta_s_" + str(n_theta_s) + ".npz"):
-            print("Loading NFW parameters")
+            # print("Loading NFW parameters")
             file = np.load("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + " n_theta_s_" + str(n_theta_s) + ".npz")
             l_ary = file['l_ary']
             theta_s_ary = file['theta_s_ary']
@@ -212,7 +212,7 @@ class Profiles:
         """ Precompute enclosed mass integral for Burkert profile
         """
         if os.path.isfile("../arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz"):
-            print("Loading Burkert parameters")
+            # print("Loading Burkert parameters")
             file = np.load("../arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz")
             l_ary = file['l_ary']
             theta_b_ary = file['theta_b_ary']
