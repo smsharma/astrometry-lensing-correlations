@@ -283,8 +283,8 @@ class PowerSpectraPopulations(PowerSpectra):
 
         r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
 
-        # if l < self.l_cutoff:
-        #     return 0
+        if l < self.l_cutoff or r > self.R_max:
+            return 0
 
         if accel:
             pref = (3 / 64) * ell ** 2 / l ** 2
@@ -304,6 +304,7 @@ class PowerSpectraPopulations(PowerSpectra):
     def C_l_total(self, ell, theta_deg_mask=0, accel=False):
         """
         Get total population power spectrum at given multipole
+        TODO: double check number of integration points and integration ranges
 
         :param ell: Multipole
         :param theta_deg_mask: Whether to apply a radial angular mask
@@ -313,7 +314,7 @@ class PowerSpectraPopulations(PowerSpectra):
         """
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logl_integ_ary = np.linspace(np.log(1e-2), np.log(200), 50)
+        logl_integ_ary = np.linspace(np.log(0.1), np.log(200), 50)
         theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 50)
         logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 20)
 
@@ -361,7 +362,7 @@ class PowerSpectraPopulations(PowerSpectra):
     def C_l_compact_total(self, ell, theta_deg_mask=0, accel=False):
         """
         Get total population power spectrum at given multipole for compact objects
-
+        TODO: double check number of integration points and integration ranges
         :param ell: Multipole
         :param theta_deg_mask: Whether to apply a radial angular mask
             TODO: this might not mean what it was originally supposed to after coordinate change
@@ -456,6 +457,7 @@ class PowerSpectraPopulations(PowerSpectra):
         if self.R0_DM == 0:
             self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=accel)]
         else:
-            C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel) for ell in self.l_ary_calc]
+            C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel) for ell in
+                            tqdm_notebook(self.l_ary_calc)]
             self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return np.array(self.C_l_ary)
