@@ -235,15 +235,15 @@ class PowerSpectraPopulations(PowerSpectra):
         self.v4_proj_mean = 5.914900709341262e-13
 
 
-    def integrand(self, x, ell, accel=False):
+    def integrand_los(self, x, ell, accel=False):
         """
-        Population integrand
+        Population integrand in Earth frame
         """
-        logR, theta, logm = x[0], x[1], x[2]
+        logl, theta, logm = x[0], x[1], x[2]
         m = np.exp(logm) * M_s
-        r = np.exp(logR) * kpc
+        l = np.exp(logl) * kpc
 
-        l = np.sqrt(r ** 2 + Rsun ** 2 + 2 * r * Rsun * np.cos(theta))
+        r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
 
         if accel:
             pref = (3 / 64) * ell ** 2 / l ** 2
@@ -252,6 +252,25 @@ class PowerSpectraPopulations(PowerSpectra):
             pref = 1
             units = (1e-6 * asctorad / Year) ** 2
 
+        return pref * l * m * self.Cl_NFW(m, l, 1, ell, r) / units * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r,
+                                                                                **self.rho_R_kwargs) * l **2 / r**2
+
+    def integrand_gc(self, x, ell, accel=False):
+        """
+        Population integrand in Galactocentric frame
+        """
+        logR, theta, logm = x[0], x[1], x[2]
+        m = np.exp(logm) * M_s
+        r = np.exp(logR) * kpc
+
+        if accel:
+            pref = (3 / 64) * ell ** 2 / r ** 2
+            units = (1e-6 * asctorad / Year ** 2) ** 2
+        else:
+            pref = 1
+            units = (1e-6 * asctorad / Year) ** 2
+
+        l = np.sqrt(r ** 2 + Rsun ** 2 + 2 * r * Rsun * np.cos(theta))
         return pref * r * m * self.Cl_NFW(m, l, 1, ell, r) / units * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r,
                                                                                                                      **self.rho_R_kwargs)
 
@@ -282,31 +301,6 @@ class PowerSpectraPopulations(PowerSpectra):
             return pref * l * self.Cl_Point(self.M_DM, l, 1, ell) / units * self.rho_R(r, **self.rho_R_kwargs) \
                    * l **2 / r**2
 
-    # def integrand_compact(self, x, ell, accel=False):
-    #     """
-    #     Population integrand for compact objects
-    #     """
-    #     logR, theta = x[0], x[1]
-    #     r = np.exp(logR) * kpc
-    #
-    #     l = np.sqrt(r ** 2 + Rsun ** 2 + 2 * r * Rsun * np.cos(theta))
-    #
-    #     if l < self.l_cutoff:
-    #         return 0
-    #
-    #     if accel:
-    #         pref = (3 / 64) * ell ** 2 / l ** 2
-    #         units = (1e-6 * asctorad / Year ** 2) ** 2
-    #     else:
-    #         pref = 1
-    #         units = (1e-6 * asctorad / Year) ** 2
-    #
-    #     if not self.R0_DM == 0:
-    #         return pref * r * self.Cl_Gauss(self.R0_DM, self.M_DM, l, 1, ell) / units * self.rho_R(r,
-    #                                                                                                **self.rho_R_kwargs)
-    #     else:
-    #         return pref * r * self.Cl_Point(self.M_DM, l, 1, ell) / units * self.rho_R(r, **self.rho_R_kwargs)
-
     def C_l_total(self, ell, theta_deg_mask=0, accel=False, n_points=50):
         """
         Get total population power spectrum at given multipole
@@ -320,18 +314,18 @@ class PowerSpectraPopulations(PowerSpectra):
         """
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logR_integ_ary = np.linspace(np.log(self.R_min / kpc), np.log(self.R_max / kpc), n_points)
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, n_points)
-        logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), n_points)
+        logl_integ_ary = np.linspace(np.log(0.1), np.log(200), 50)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 50)
+        logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 20)
 
-        measure = (logR_integ_ary[1] - logR_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0]) * (
+        measure = (logl_integ_ary[1] - logl_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0]) * (
                 logM_integ_ary[1] - logM_integ_ary[0])
 
         integ = 0
-        for logR in logR_integ_ary:
+        for logl in logl_integ_ary:
             for theta in theta_integ_ary:
                 for logM in logM_integ_ary:
-                    integ += np.sin(theta) * self.integrand([logR, theta, logM], ell, accel)
+                    integ += np.sin(theta) * self.integrand_los([logl, theta, logM], ell, accel)
         integ *= 2 * np.pi * measure
 
         if accel:
@@ -361,39 +355,6 @@ class PowerSpectraPopulations(PowerSpectra):
         integ *= 2 * np.pi * measure
 
         return self.pref * integ
-
-    # def C_l_compact_total(self, ell, theta_deg_mask=0, accel=False, n_points=50):
-    #     """
-    #     Get total population power spectrum at given multipole for compact objects
-    #
-    #     :param ell: Multipole
-    #     :param theta_deg_mask: Whether to apply a radial angular mask
-    #         TODO: this might not mean what it was originally supposed to after coordinate change
-    #     :param accel: Whether this is the acceleration PS (otherwise velocity)
-    #     :param n_points: Number of points used in integration
-    #     :return: Power spectrum at given multipole ell
-    #     """
-    #
-    #     theta_rad_mask = np.deg2rad(theta_deg_mask)
-    #
-    #     logR_integ_ary = np.linspace(np.log(self.R_min / kpc), np.log(15), 800)
-    #     theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 5000)
-    #
-    #     measure = (logR_integ_ary[1] - logR_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0])
-    #
-    #     integ = 0
-    #
-    #     for logR in (logR_integ_ary):
-    #         for theta in theta_integ_ary:
-    #             integ += np.sin(theta) * self.integrand_compact([logR, theta], ell, accel)
-    #     integ *= 2 * np.pi * measure
-    #
-    #     if accel:
-    #         v_term = self.v4_proj_mean
-    #     else:
-    #         v_term = self.vsq_proj_mean
-    #
-    #     return self.pref * integ * v_term
 
     def C_l_compact_total(self, ell, theta_deg_mask=0, accel=False, n_points=50):
         """
@@ -443,7 +404,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         for theta in theta_integ_ary:
             for logM in logM_integ_ary:
-                integ += np.sin(theta) * self.integrand([np.log(R / kpc), theta, logM], ell, accel) / R
+                integ += np.sin(theta) * self.integrand_gc([np.log(R / kpc), theta, logM], ell, accel) / R
         integ *= 2 * np.pi * measure
 
         if accel:
@@ -468,7 +429,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         for logR in logR_integ_ary:
             for theta in theta_integ_ary:
-                integ += np.sin(theta) * self.integrand([logR, theta, np.log(M / M_s)], ell, accel) / M
+                integ += np.sin(theta) * self.integrand_gc([logR, theta, np.log(M / M_s)], ell, accel) / M
         integ *= 2 * np.pi * measure
 
         if accel:
@@ -499,15 +460,3 @@ class PowerSpectraPopulations(PowerSpectra):
             C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, n_points=n_points) for ell in tqdm_notebook(self.l_ary_calc)]
             self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return np.array(self.C_l_ary)
-
-
-# def integ(M_min, M_max, alpha=-1.9):
-#     if alpha == -1.:
-#         return np.log(M_max) - np.log(M_min)
-#     return (M_max ** (alpha + 1) - M_min ** (alpha + 1)) / (alpha + 1)
-#
-#
-# def integ_M(M_min, M_max, alpha=-1.9):
-#     if alpha == -2.:
-#         return np.log(M_max) - np.log(M_min)
-#     return (M_max ** (alpha + 2) - M_min ** (alpha + 2)) / (alpha + 2)
