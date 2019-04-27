@@ -25,26 +25,31 @@ class Profiles:
     # Enclosed mass functions
     ##################################################
 
+    @classmethod
     def MGauss(self, theta, M0, beta0):
         """ Enclosed mass in cylinder, Gaussian profile
         """
         return M0 * (1 - mp.exp(-theta ** 2 / (2 * beta0 ** 2)))
 
+    @classmethod
     def MPlumm(self, theta, M0, beta0):
         """ Enclosed mass in cylinder, Plummer profile
         """
         return M0 * theta ** 2 / (theta ** 2 + beta0 ** 2)
 
+    @classmethod
     def MNFWdivM0(self, x):
         """ Enclosed mass in cylinder, NFW profile
         """
         return (mp.log(x / 2) + self.F(x))
 
+    @classmethod
     def MtNFWdivM0(self, x, tau=15.):
         """ Enclosed mass in cylinder, tNFW profile
         """
         return self.Ft(x, tau)
 
+    @classmethod
     def MBurkdivM0(self, x):
         """ Enclosed mass in cylinder, Burkert profile
         """
@@ -54,6 +59,7 @@ class Profiles:
     # Enclosed masses and their derivatives
     ##################################################
 
+    @classmethod
     def MdMdb_NFW(self, b, c200, M200):
         """ NFW mass and derivative within a cylinder of radius `b`
 
@@ -71,6 +77,7 @@ class Profiles:
         d2Mdb2 = 4 * np.pi * r_s ** 2 * rho_s * (-(1 / (x ** 2 * r_s)) + self.d2Fdx2(x) / r_s)
         return M, dMdb, d2Mdb2
 
+    @classmethod
     def MdMdb_Gauss(self, b, R0, M0):
         """ Mass and derivative within a cylinder of radius `b`
             for a Gaussian lens
@@ -85,6 +92,7 @@ class Profiles:
 
         return M, dMdb, d2Mdb2
 
+    @classmethod
     def MdMdb_Plummer(self, b, R0, M0):
         """ Mass and derivative within a cylinder of radius `b`
             for a Plummer lens
@@ -212,7 +220,7 @@ class Profiles:
         """ Precompute enclosed mass integral for Burkert profile
         """
         if os.path.isfile("../arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz"):
-            # print("Loading Burkert parameters")
+            # print("MdMdb_NFWg Burkert parameters")
             file = np.load("../arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz")
             l_ary = file['l_ary']
             theta_b_ary = file['theta_b_ary']
