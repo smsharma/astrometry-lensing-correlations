@@ -59,7 +59,7 @@ class DemoSim:
         """
 
         # Set global parameters
-        self.mult = arrow_mult
+        self.arrow_mult = arrow_mult
         self.show_lens = show_lens
         self.show_orig = show_orig
         self.show_vel_arrow = show_vel_arrows
@@ -198,8 +198,8 @@ class DemoSim:
             for i_source in range(self.n_total):
                 self.arrows.append(self.ax.add_patch(Arrow(self.sources["theta_x"][i_source],
                                                            self.sources["theta_y"][i_source],
-                                                           mu_s[i_source, 0] * self.mult,
-                                                           mu_s[i_source, 1] * self.mult,
+                                                           mu_s[i_source, 0] * self.arrow_mult,
+                                                           mu_s[i_source, 1] * self.arrow_mult,
                                                            **self.arrow_kwargs)))
 
         self.ax.get_xaxis().set_ticks([])
@@ -260,8 +260,8 @@ class DemoSim:
                 self.arrows[i_source].remove()
                 self.arrows[i_source] = self.ax.add_patch(Arrow(self.sources["theta_x"][i_source],
                                                                 self.sources["theta_y"][i_source],
-                                                                mu_s[i_source, 0] * self.mult,
-                                                                mu_s[i_source, 1] * self.mult,
+                                                                mu_s[i_source, 0] * self.arrow_mult,
+                                                                mu_s[i_source, 1] * self.arrow_mult,
                                                                 **self.arrow_kwargs))
 
     @classmethod
