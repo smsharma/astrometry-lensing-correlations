@@ -213,7 +213,7 @@ class PowerSpectraPopulations(PowerSpectra):
         self.pref = self.f_DM * 1. / (self.M_DM / (1e12 * M_s)) / norm
 
         l_los_ary = np.logspace(-2, 2, 100) * kpc
-        n_lens_ary = [self.n_lens_compact(l_los_max=l_max, n_points=10) for l_max in l_los_ary]
+        n_lens_ary = [self.n_lens_compact(l_los_max=l_max) for l_max in l_los_ary]
         self.l_cutoff = (10**np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary)))
 
     def set_subhalo_properties(self, c200_model):
