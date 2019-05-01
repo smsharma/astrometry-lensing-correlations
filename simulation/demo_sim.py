@@ -4,8 +4,6 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Arrow
 
 from theory.units import *
-from simulation.astrometry_sim import QuasarSim
-
 from theory.profiles import Profiles
 
 
