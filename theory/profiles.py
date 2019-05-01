@@ -11,6 +11,7 @@ from theory.units import *
 
 class Profiles:
     """ Class to calculate expected power spectra from astrometric induced velocities and accelerations
+    TODO: unify / clean up the many functions and methods...
        
         :param precompute: List of profiles to precompute arrays for to speed up computation ['Burk', 'NFW']
     """
