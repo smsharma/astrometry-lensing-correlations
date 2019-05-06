@@ -171,37 +171,6 @@ class QuasarSim(SubhaloSample):
                     alpha_qsr = self.alpha(self.beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
                     self.alpha_qsrs[idx_qsr] += alpha_qsr
 
-    @classmethod
-    def mu_ext(self, beta_vec, v_ang_vec, R_0, M_0, d_lens):
-        """ Get lens-induced velocity
-            TODO: incorporate into mu()
-        """
-
-        b_vec = d_lens * np.array(beta_vec)  # Convert angular to physical impact parameter
-        v_vec = d_lens * np.array(v_ang_vec)  # Convert angular to physical velocity
-        b = np.linalg.norm(b_vec)  # Impact parameter
-        M, dMdb, _ = Profiles.MdMdb_Gauss(b, R_0, M_0)
-        b_unit_vec = b_vec / b  # Convert angular to physical impact parameter
-        b_dot_v = np.dot(b_unit_vec, v_vec)
-        factor = (dMdb / b * b_unit_vec * b_dot_v
-                  + M / b ** 2 * (v_vec - 2 * b_unit_vec * b_dot_v))
-
-        return -factor * 4 * GN / (asctorad / Year)  # Convert to as/yr
-
-    @classmethod
-    def theta_ext(self, beta_vec, v_ang_vec, R_0, M_0, d_lens):
-        """ Get lens-induced velocity
-            TODO: incorporate into mu()
-        """
-
-        b_vec = d_lens * np.array(beta_vec)  # Convert angular to physical impact parameter
-        v_vec = d_lens * np.array(v_ang_vec)  # Convert angular to physical velocity
-        b = np.linalg.norm(b_vec)  # Impact parameter
-        M, dMdb, _ = Profiles.MdMdb_Gauss(b, R_0, M_0)
-        b_unit_vec = b_vec / b  # Convert angular to physical impact parameter
-
-        return  4 * GN * M / b * b_unit_vec * radtoasc  # Convert to as
-
     def mu(self, beta_vec, v_ang_vec, c200_lens, M200_lens, d_lens):
         """ Get lens-induced velocity
 

@@ -38,19 +38,16 @@ class Profiles:
         """
         return M0 * theta ** 2 / (theta ** 2 + beta0 ** 2)
 
-    @classmethod
     def MNFWdivM0(self, x):
         """ Enclosed mass in cylinder, NFW profile
         """
         return (mp.log(x / 2) + self.F(x))
 
-    @classmethod
     def MtNFWdivM0(self, x, tau=15.):
         """ Enclosed mass in cylinder, tNFW profile
         """
         return self.Ft(x, tau)
 
-    @classmethod
     def MBurkdivM0(self, x):
         """ Enclosed mass in cylinder, Burkert profile
         """
@@ -279,7 +276,7 @@ class Profiles:
     # Note to self: be careful with the assumptions 
     #    (e.g. cosmology, subhalo mass function, 
     #    (sub)halo profile) that go into these and  
-    #    make sure that onsistent with the rest of 
+    #    make sure that consistent with the rest of
     #    the analysis.
     ##################################################
 
