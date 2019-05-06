@@ -10,6 +10,7 @@ from simulation.subhalo_sim import SubhaloSample
 from simulation.estimator_wholesky import get_vector_alm, get_cross_correlation_Cells
 from theory.profiles import Profiles
 
+
 class QuasarSim(SubhaloSample):
     def __init__(self, verbose=True, max_sep=3, data_dir='../data/', save_tag='sample', save=False, save_dir='Output/',
                  sim_uniform=False, nside=512, calc_powerspecs=True, do_alpha=False, *args, **kwargs):
@@ -163,27 +164,24 @@ class QuasarSim(SubhaloSample):
             # Populate quasar induced velocity (and optionally accelerations) array
             for i_qsr, idx_qsr in enumerate((idxs_qsrs_around)):
 
-                mu_qsr = self.mu(self.beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
+                mu_qsr = self.mu(d_lens * self.beta_lens_qsrs_around[i_qsr], d_lens * v_lens, c200_lens, m_lens)
                 self.mu_qsrs[idx_qsr] += mu_qsr
 
                 # Get induced accleration as well if specified
                 if self.do_alpha:
-                    alpha_qsr = self.alpha(self.beta_lens_qsrs_around[i_qsr], v_lens, c200_lens, m_lens, d_lens)
+                    alpha_qsr = self.alpha(d_lens * self.beta_lens_qsrs_around[i_qsr], d_lens * v_lens, c200_lens,
+                                           m_lens)
                     self.alpha_qsrs[idx_qsr] += alpha_qsr
 
-    def mu(self, beta_vec, v_ang_vec, c200_lens, M200_lens, d_lens):
+    def mu(self, b_vec, v_vec, *args_lens):
         """ Get lens-induced velocity
 
-            :param beta_vec: angular impact parameter (pointing lens to source) vector in rad
-            :param v_ang_vec: lens angular velocity in natural units
-            :param c200_lens: lens concentration
-            :param M200_lens: lens mass in natural units
-            :param d_lens: distance to lens in natural units
+            :param b_vec: physical impact parameter (pointing lens to source) vector in rad
+            :param v_vec: physical velocity in natural units
+            :param args_lens: arguments going into enclosed mass function
             :return: lens-induced velocity in as/yr
         """
 
-        b_vec = d_lens * np.array(beta_vec)  # Convert angular to physical impact parameter
-        v_vec = d_lens * np.array(v_ang_vec)  # Convert angular to physical velocity
         b = np.linalg.norm(b_vec)  # Impact parameter
         if self.sh_profile == "NFW":
             MdMdb_func = self.MdMdb_NFW
@@ -194,7 +192,7 @@ class QuasarSim(SubhaloSample):
         else:
             raise Exception("Unknown profile specification!")
 
-        M, dMdb, _ = MdMdb_func(b, c200_lens, M200_lens)
+        M, dMdb, _ = MdMdb_func(b, *args_lens)
         b_unit_vec = b_vec / b  # Convert angular to physical impact parameter
         b_dot_v = np.dot(b_unit_vec, v_vec)
         factor = (dMdb / b * b_unit_vec * b_dot_v
@@ -202,18 +200,14 @@ class QuasarSim(SubhaloSample):
 
         return -factor * 4 * GN / (asctorad / Year)  # Convert to as/yr
 
-    def alpha(self, beta_vec, v_ang_vec, c200_lens, M200_lens, d_lens):
+    def alpha(self, b_vec, v_vec, *args_lens):
         """ Get lens-induced acceleration
 
-            :param beta_vec: angular impact parameter (pointing lens to source) vector in rad
-            :param v_ang_vec: lens angular velocity in natural units
-            :param c200_lens: lens concentration
-            :param M200_lens: lens mass in natural units
-            :param d_lens: distance to lens in natural units
+            :param b_vec: physical impact parameter (pointing lens to source) vector in rad
+            :param v_vec: physical velocity in natural units
+            :param args_lens: arguments going into enclosed mass function
             :return: lens-induced acceleration in as/yr^2
         """
-        b_vec = d_lens * np.array(beta_vec)  # Convert angular to physical impact parameter
-        v_vec = d_lens * np.array(v_ang_vec)  # Convert angular to physical velocity
         b = np.linalg.norm(b_vec)  # Impact parameter
         if self.sh_profile == "NFW":
             MdMdb_func = self.MdMdb_NFW
@@ -224,12 +218,12 @@ class QuasarSim(SubhaloSample):
         else:
             raise Exception("Unknown profile specification!")
 
-        M, dMdb, d2Mdb2 = MdMdb_func(b, c200_lens, M200_lens)
+        M, dMdb, d2Mdb2 = MdMdb_func(b, *args_lens)
         b_unit_vec = b_vec / b  # Convert angular to physical impact parameter
         b_dot_v = np.dot(b_unit_vec, v_vec)
         factor = (6 * b_vec * b_dot_v ** 2 * M - 2 * b *
                   ((2 * v_vec * b_dot_v + b_vec * np.dot(v_vec,
-                  (v_vec * b - b_vec * b_dot_v) / b ** 2)) * M +
+                                                         (v_vec * b - b_vec * b_dot_v) / b ** 2)) * M +
                    2 * b_vec * b_dot_v ** 2 * dMdb) + b ** 2 *
                   ((2 * v_vec * b_dot_v + b_vec * np.dot(v_vec, (v_vec * b - b_vec * b_dot_v) / b ** 2))
                    * dMdb + b_vec * b_dot_v ** 2 * d2Mdb2)) / b ** 4
