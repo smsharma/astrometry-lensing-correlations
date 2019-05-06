@@ -91,7 +91,7 @@ class FisherForecast:
                     if i != j:
                         self.fshr_l[j, i, il] = self.fshr_l[i, j, il]
 
-        self.fshr_cls[:, :] = np.sum(self.fshr_l, axis=2)
+        self.fshr_cls[:, :] = np.sum(np.nan_to_num(self.fshr_l), axis=2)
 
     def get_sigmas(self):
         fshr = self.fshr_cls + self.fshr_prior
