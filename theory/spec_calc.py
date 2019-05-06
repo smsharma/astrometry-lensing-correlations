@@ -308,7 +308,6 @@ class PowerSpectraPopulations(PowerSpectra):
 
         :param ell: Multipole
         :param theta_deg_mask: Whether to apply a radial angular mask
-            TODO: this might not mean what it was originally supposed to after coordinate change, so just set to zero
         :param accel: Whether this is the acceleration PS (otherwise velocity)
         :return: Power spectrum at given multipole ell
         """
@@ -365,7 +364,6 @@ class PowerSpectraPopulations(PowerSpectra):
         TODO: double check number of integration points and integration ranges
         :param ell: Multipole
         :param theta_deg_mask: Whether to apply a radial angular mask
-            TODO: this might not mean what it was originally supposed to after coordinate change
         :param accel: Whether this is the acceleration PS (otherwise velocity)
         :return: Power spectrum at given multipole ell
         """
