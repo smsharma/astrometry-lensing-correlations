@@ -1,0 +1,9 @@
+- Write introduction
+- Write formalism
+- Present hopelessness of accelerations for all possible scenarios
+- Run high-res simulations, reconcile sim/theory disagreement
+- Write further prospects
+- Write conclusions
+- Clean up azimuthal asymmetry (@kvt: present analytic argument)
+- @kvt: Clean up SFDM section
+- @kvt: Write appendices B and C
