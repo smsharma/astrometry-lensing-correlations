@@ -105,8 +105,7 @@ class Parameter:
                  fid_val=0.2, dpar=0.02, prior=None, vary=True,
                  C_l_mu_p=None, C_l_mu_m=None,
                  C_l_alpha_p=None, C_l_alpha_m=None,
-                 l_min=1, l_max=1000,
-                 name_tex='$\\f_\mathrm{DM}$'):
+                 l_min=1, l_max=1000):
         self.name = name
         self.fid_val = fid_val
         self.dpar = dpar
@@ -124,7 +123,8 @@ class Parameter:
 
 
 class AstrometryObservation:
-    def __init__(self, fsky=1., sigma_mu=1, sigma_alpha=None, N_q=1e9,
+    def __init__(self, fsky=1., sigma_mu=1, sigma_alpha=None,
+                 N_q_mu=1e9, N_q_alpha=1e10,
                  l_min_mu=1, l_max_mu=1000,
                  l_min_alpha=1, l_max_alpha=1000):
         self.fsky = fsky
@@ -146,7 +146,7 @@ class AstrometryObservation:
 
         if self.sigma_mu is not None:
             self.has_mu = True
-            self.N_l_mu_val = 4 * np.pi * sigma_mu ** 2 / N_q
+            self.N_l_mu_val = 4 * np.pi * sigma_mu ** 2 / N_q_mu
         if self.sigma_alpha is not None:
             self.has_alpha = True
-            self.N_l_alpha_val = 4 * np.pi * sigma_alpha ** 2 / N_q
+            self.N_l_alpha_val = 4 * np.pi * sigma_alpha ** 2 / N_q_alpha
