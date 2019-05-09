@@ -234,7 +234,6 @@ class PowerSpectraPopulations(PowerSpectra):
         # Mean projected v**4 for acceleration integral
         self.v4_proj_mean = 5.914900709341262e-13
 
-
     def integrand_los(self, x, ell, accel=False):
         """
         Population integrand in Earth frame
@@ -301,19 +300,21 @@ class PowerSpectraPopulations(PowerSpectra):
             return pref * l * self.Cl_Point(self.M_DM, l, 1, ell) / units * self.rho_R(r, **self.rho_R_kwargs) \
                    * l **2 / r**2
 
-    def C_l_total(self, ell, theta_deg_mask=0, accel=False):
+    def C_l_total(self, ell, theta_deg_mask=0, l_min=0.1 * kpc, l_max=200 * kpc, accel=False):
         """
         Get total population power spectrum at given multipole
         TODO: double check number of integration points and integration ranges
 
         :param ell: Multipole
         :param theta_deg_mask: Whether to apply a radial angular mask
+        :param l_min: Smallest distance to integrate from
+        :param l_max: Largest distance to integrate to
         :param accel: Whether this is the acceleration PS (otherwise velocity)
         :return: Power spectrum at given multipole ell
         """
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logl_integ_ary = np.linspace(np.log(0.1), np.log(200), 50)
+        logl_integ_ary = np.linspace(np.log(l_min / kpc), np.log(l_max / kpc), 50)
         theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 50)
         logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 20)
 
@@ -370,8 +371,8 @@ class PowerSpectraPopulations(PowerSpectra):
 
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logl_integ_ary = np.linspace(np.log(self.l_min), np.log(self.R_max/2.), 500)
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 100)
+        logl_integ_ary = np.linspace(np.log(self.l_min), np.log(100.), 40)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 40)
 
         measure = (logl_integ_ary[1] - logl_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0])
 
@@ -395,7 +396,7 @@ class PowerSpectraPopulations(PowerSpectra):
         """
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 100)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 500)
         logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 20)
 
         measure = (theta_integ_ary[1] - theta_integ_ary[0]) * (logM_integ_ary[1] - logM_integ_ary[0])
@@ -453,7 +454,11 @@ class PowerSpectraPopulations(PowerSpectra):
         Get power spectrum over full multipole range for compact objects
         """
         if self.R0_DM == 0:
-            self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=accel)]
+            if accel:
+                self.C_l_ary = self.l_ary ** 2 * np.array(len(self.l_ary) * \
+                                [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=accel)])
+            else:
+                self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=accel)]
         else:
             C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel) for ell in
                             tqdm_notebook(self.l_ary_calc)]
