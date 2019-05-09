@@ -141,7 +141,7 @@ class PowerSpectraPopulations(PowerSpectra):
             joint mass-radial distribution pdf
         """
         M200, r = np.exp(x[0]) * M_s, np.exp(x[1]) * kpc
-        return 4 * np.pi * M200 * r * self.rho_M(M200) * self.rho_R(r)
+        return 4 * np.pi * M200 * r * self.rho_M(M200, **self.rho_M_kwargs) * self.rho_R(r)
 
     def integrand_norm_compact(self, x):
         """ Integrand for calculating overall normalization of 
@@ -226,7 +226,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
     def calc_v_proj_mean_integrals(self):
 
-        # print("Loading velocity integrals")
+        # print("Loading velocity integrals")alpha
 
         # Mean projected v**2 for velocity integral
         self.vsq_proj_mean = 5.789779157814031e-07
