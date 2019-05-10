@@ -282,9 +282,6 @@ class PowerSpectraPopulations(PowerSpectra):
 
         r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
 
-        if l < self.l_cutoff or r > self.R_max:
-            return 0
-
         if accel:
             pref = (3 / 64) * ell ** 2 / l ** 2
             units = (1e-6 * asctorad / Year ** 2) ** 2
@@ -456,7 +453,7 @@ class PowerSpectraPopulations(PowerSpectra):
         if self.R0_DM == 0:
             if accel:
                 self.C_l_ary = self.l_ary ** 2 * np.array(len(self.l_ary) * \
-                                [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=accel)])
+                                [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=True)])
             else:
                 self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=accel)]
         else:

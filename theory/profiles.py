@@ -343,8 +343,12 @@ class Profiles:
         """
         return r ** 2 * np.exp(-2 / alpha_E * ((r / r_s) ** alpha_E - 1))
 
-        ##################################################
+    def r2rho_const(self, r):
+        """ Constant density
+        """
+        return r ** 2 * 1
 
+    ##################################################
     # Mass distributions
     ##################################################
 
