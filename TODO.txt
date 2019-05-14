@@ -1,6 +1,4 @@
-- Fix v^2 bug in acceleration Fisher
 - Go to lower \ell
-- Write introduction
 - Write formalism
 - Present hopelessness of accelerations for all possible scenarios (in Appendix)
 - Run high-res simulations, reconcile sim/theory disagreement
@@ -10,3 +8,6 @@
 - @kvt: Clean up SFDM section
 - @kvt: Write Appendices B and C
 - Sources of systematic noise---intrinsic velocities and aberrant drift
+
+- Write introduction
+- Fix v^2 bug in acceleration Fisher
