@@ -116,7 +116,7 @@ class PowerSpectra(Profiles):
 
 
 class PowerSpectraPopulations(PowerSpectra):
-    def __init__(self, l_min=1, l_max=2000, n_l=50):
+    def __init__(self, l_min=1, l_max=5000, n_l=50):
         """
         Class to calculate power spectra of populations
 
@@ -282,6 +282,9 @@ class PowerSpectraPopulations(PowerSpectra):
 
         r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
 
+        if self.R0_DM == 0:
+            if l <  self.l_cutoff: return 0
+
         if accel:
             pref = (3 / 64) * ell ** 2 / l ** 2
             units = (1e-6 * asctorad / Year ** 2) ** 2
@@ -297,7 +300,7 @@ class PowerSpectraPopulations(PowerSpectra):
             return pref * l * self.Cl_Point(self.M_DM, l, 1, ell) / units * self.rho_R(r, **self.rho_R_kwargs) \
                    * l **2 / r**2
 
-    def C_l_total(self, ell, theta_deg_mask=0, l_min=0.1 * kpc, l_max=200 * kpc, accel=False):
+    def C_l_total(self, ell, theta_deg_mask=0, l_los_min=0.1 * kpc, l_los_max=200 * kpc, accel=False):
         """
         Get total population power spectrum at given multipole
         TODO: double check number of integration points and integration ranges
@@ -311,7 +314,7 @@ class PowerSpectraPopulations(PowerSpectra):
         """
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logl_integ_ary = np.linspace(np.log(l_min / kpc), np.log(l_max / kpc), 50)
+        logl_integ_ary = np.linspace(np.log(l_los_min / kpc), np.log(l_los_max / kpc), 100)
         theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 50)
         logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 20)
 
@@ -356,7 +359,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         return self.pref * integ
 
-    def C_l_compact_total(self, ell, theta_deg_mask=0, accel=False):
+    def C_l_compact_total(self, ell, theta_deg_mask=0,  l_los_min=0.1 * kpc, l_los_max=200 * kpc, accel=False):
         """
         Get total population power spectrum at given multipole for compact objects
         TODO: double check number of integration points and integration ranges
@@ -368,8 +371,8 @@ class PowerSpectraPopulations(PowerSpectra):
 
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logl_integ_ary = np.linspace(np.log(self.l_min), np.log(100.), 40)
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 40)
+        logl_integ_ary = np.linspace(np.log(l_los_min / kpc), np.log(l_los_max / kpc), 200)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 50)
 
         measure = (logl_integ_ary[1] - logl_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0])
 
@@ -437,27 +440,30 @@ class PowerSpectraPopulations(PowerSpectra):
 
         return self.pref * integ * v_term
 
-    def get_C_l_total_ary(self, theta_deg_mask=0, accel=False):
+    def get_C_l_total_ary(self, theta_deg_mask=0, accel=False, l_los_min=1e-3 * pc, l_los_max=200 * kpc):
         """
         Get power spectrum over full multipole range
         """
-        C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask=theta_deg_mask, accel=accel) for ell in
+        C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min,
+                                       l_los_max=l_los_max) for ell in
                         tqdm_notebook(self.l_ary_calc)]
         self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return self.C_l_ary
 
-    def get_C_l_compact_total_ary(self, theta_deg_mask=0, accel=False):
+    def get_C_l_compact_total_ary(self, theta_deg_mask=0, accel=False, l_los_min=1e-3 * pc, l_los_max=10 * kpc):
         """
         Get power spectrum over full multipole range for compact objects
         """
+
         if self.R0_DM == 0:
             if accel:
                 self.C_l_ary = self.l_ary ** 2 * np.array(len(self.l_ary) * \
-                                [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=True)])
+                                [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=True, l_los_min=l_los_min, l_los_max=l_los_max)])
             else:
-                self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=accel)]
+                self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1,
+                                theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min, l_los_max=l_los_max)]
         else:
-            C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel) for ell in
+            C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min, l_los_max=l_los_max) for ell in
                             tqdm_notebook(self.l_ary_calc)]
             self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return np.array(self.C_l_ary)
