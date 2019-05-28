@@ -194,7 +194,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         self.N_calib = N_calib
 
-        norm, norm_err = mcquad(self.integrand_norm, npoints=1e6,
+        norm, norm_err = mcquad(self.integrand_norm, npoints=1e7,
                                 xl=[np.log(self.M_min_calib / M_s), np.log(self.R_min / kpc)],
                                 xu=[np.log(self.M_max_calib / M_s), np.log(self.R_max / kpc)], nprocs=5)
 
@@ -282,8 +282,8 @@ class PowerSpectraPopulations(PowerSpectra):
 
         r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
 
-        if self.R0_DM == 0:
-            if l <  self.l_cutoff: return 0
+        # if self.R0_DM == 0:
+        #     if l <  self.l_cutoff: return 0
 
         if accel:
             pref = (3 / 64) * ell ** 2 / l ** 2
@@ -461,7 +461,7 @@ class PowerSpectraPopulations(PowerSpectra):
                                 [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=True, l_los_min=l_los_min, l_los_max=l_los_max)])
             else:
                 self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1,
-                                theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min, l_los_max=l_los_max)]
+                                theta_deg_mask=theta_deg_mask, accel=False, l_los_min=l_los_min, l_los_max=l_los_max)]
         else:
             C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min, l_los_max=l_los_max) for ell in
                             tqdm_notebook(self.l_ary_calc)]
