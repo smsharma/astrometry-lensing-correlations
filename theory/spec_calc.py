@@ -2,7 +2,7 @@ import numpy as np
 import mpmath as mp
 from scipy.special import kn
 from tqdm import *
-# from skmonaco import mcquad
+from skmonaco import mcquad
 
 from theory.units import *
 from theory.profiles import Profiles
@@ -194,12 +194,8 @@ class PowerSpectraPopulations(PowerSpectra):
 
         self.N_calib = N_calib
 
-        # norm, norm_err = mcquad(self.integrand_norm, npoints=1e7,
-        #                         xl=[np.log(self.M_min_calib / M_s), np.log(self.R_min / kpc)],
-        #                         xu=[np.log(self.M_max_calib / M_s), np.log(self.R_max / kpc)], nprocs=5)
-
-        logM_integ_ary = np.linspace(np.log(self.M_min_calib / M_s), np.log(self.M_max_calib / M_s), 50)
-        logR_integ_ary = np.linspace(np.log(self.R_min / kpc), np.log(self.R_max / kpc), 50)
+        logM_integ_ary = np.linspace(np.log(self.M_min_calib / M_s), np.log(self.M_max_calib / M_s), 500)
+        logR_integ_ary = np.linspace(np.log(self.R_min / kpc), np.log(self.R_max / kpc), 500)
 
         measure = (logM_integ_ary[1] - logM_integ_ary[0]) * (logR_integ_ary[1] - logR_integ_ary[0])
 
@@ -220,18 +216,14 @@ class PowerSpectraPopulations(PowerSpectra):
         self.R0_DM = R0_DM
         self.f_DM = f_DM
 
+        logR_integ_ary = np.linspace(np.log(self.R_min / kpc), np.log(self.R_max / kpc), 500)
 
-        # norm, norm_err = mcquad(self.integrand_norm_compact, npoints=1e6, xl=[np.log(self.R_min / kpc)],
-        #                         xu=[np.log(self.R_max / kpc)], nprocs=5)
-
-        logM_integ_ary = np.linspace(np.log(self.M_min_calib / M_s), np.log(self.M_max_calib / M_s), 50)
-
-        measure = (logM_integ_ary[1] - logM_integ_ary[0])
+        measure = (logR_integ_ary[1] - logR_integ_ary[0])
 
         norm = 0
 
-        for logM in logM_integ_ary:
-            norm += self.integrand_norm_compact([logM])
+        for logR in logR_integ_ary:
+            norm += self.integrand_norm_compact([logR])
 
         norm *= measure
 
@@ -239,7 +231,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         l_los_ary = np.logspace(-2, 2, 100) * kpc
         n_lens_ary = [self.n_lens_compact(l_los_max=l_max) for l_max in l_los_ary]
-        self.l_cutoff = (10**np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary)))
+        self.l_cutoff = (10 ** np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary)))
 
     def set_subhalo_properties(self, c200_model):
         """
@@ -305,9 +297,6 @@ class PowerSpectraPopulations(PowerSpectra):
 
         r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
 
-        # if self.R0_DM == 0:
-        #     if l <  self.l_cutoff: return 0
-
         if accel:
             pref = (3 / 4) * ell ** 2 / l ** 2
             units = (1e-6 * asctorad / Year ** 2) ** 2
@@ -337,8 +326,8 @@ class PowerSpectraPopulations(PowerSpectra):
         """
         theta_rad_mask = np.deg2rad(theta_deg_mask)
 
-        logl_integ_ary = np.linspace(np.log(l_los_min / kpc), np.log(l_los_max / kpc), 100)
-        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 50)
+        logl_integ_ary = np.linspace(np.log(l_los_min / kpc), np.log(l_los_max / kpc), 50)
+        theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 20)
         logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 20)
 
         measure = (logl_integ_ary[1] - logl_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0]) * (
@@ -463,13 +452,13 @@ class PowerSpectraPopulations(PowerSpectra):
 
         return self.pref * integ * v_term
 
-    def get_C_l_total_ary(self, theta_deg_mask=0, accel=False, l_los_min=1e-3 * pc, l_los_max=200 * kpc):
+    def get_C_l_total_ary(self, theta_deg_mask=0, accel=False, l_los_min=5 * pc, l_los_max=200 * kpc):
         """
         Get power spectrum over full multipole range
         """
         C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min,
                                        l_los_max=l_los_max) for ell in
-                        (self.l_ary_calc)]
+                        tqdm_notebook(self.l_ary_calc)]
         self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return self.C_l_ary
 
