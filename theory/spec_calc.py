@@ -2,7 +2,7 @@ import numpy as np
 import mpmath as mp
 from scipy.special import kn
 from tqdm import *
-from skmonaco import mcquad
+# from skmonaco import mcquad
 
 from theory.units import *
 from theory.profiles import Profiles
@@ -194,9 +194,22 @@ class PowerSpectraPopulations(PowerSpectra):
 
         self.N_calib = N_calib
 
-        norm, norm_err = mcquad(self.integrand_norm, npoints=1e7,
-                                xl=[np.log(self.M_min_calib / M_s), np.log(self.R_min / kpc)],
-                                xu=[np.log(self.M_max_calib / M_s), np.log(self.R_max / kpc)], nprocs=5)
+        # norm, norm_err = mcquad(self.integrand_norm, npoints=1e7,
+        #                         xl=[np.log(self.M_min_calib / M_s), np.log(self.R_min / kpc)],
+        #                         xu=[np.log(self.M_max_calib / M_s), np.log(self.R_max / kpc)], nprocs=5)
+
+        logM_integ_ary = np.linspace(np.log(self.M_min_calib / M_s), np.log(self.M_max_calib / M_s), 50)
+        logR_integ_ary = np.linspace(np.log(self.R_min / kpc), np.log(self.R_max / kpc), 50)
+
+        measure = (logM_integ_ary[1] - logM_integ_ary[0]) * (logR_integ_ary[1] - logR_integ_ary[0])
+
+        norm = 0
+
+        for logM in logM_integ_ary:
+            for logR in logR_integ_ary:
+                norm += self.integrand_norm([logM, logR])
+
+        norm *= measure
 
         self.pref = self.N_calib / norm
 
@@ -207,8 +220,20 @@ class PowerSpectraPopulations(PowerSpectra):
         self.R0_DM = R0_DM
         self.f_DM = f_DM
 
-        norm, norm_err = mcquad(self.integrand_norm_compact, npoints=1e6, xl=[np.log(self.R_min / kpc)],
-                                xu=[np.log(self.R_max / kpc)], nprocs=5)
+
+        # norm, norm_err = mcquad(self.integrand_norm_compact, npoints=1e6, xl=[np.log(self.R_min / kpc)],
+        #                         xu=[np.log(self.R_max / kpc)], nprocs=5)
+
+        logM_integ_ary = np.linspace(np.log(self.M_min_calib / M_s), np.log(self.M_max_calib / M_s), 50)
+
+        measure = (logM_integ_ary[1] - logM_integ_ary[0])
+
+        norm = 0
+
+        for logM in logM_integ_ary:
+            norm += self.integrand_norm_compact([logM])
+
+        norm *= measure
 
         self.pref = self.f_DM * 1. / (self.M_DM / (1e12 * M_s)) / norm
 
@@ -225,8 +250,6 @@ class PowerSpectraPopulations(PowerSpectra):
         self.c200_model = c200_model
 
     def calc_v_proj_mean_integrals(self):
-
-        # print("Loading velocity integrals")alpha
 
         # Mean projected v**2 for velocity integral
         self.vsq_proj_mean = 5.789779157814031e-07
@@ -245,7 +268,7 @@ class PowerSpectraPopulations(PowerSpectra):
         r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
 
         if accel:
-            pref = (3 / 64) * ell ** 2 / l ** 2
+            pref = (3 / 4) * ell ** 2 / l ** 2
             units = (1e-6 * asctorad / Year ** 2) ** 2
         else:
             pref = 1
@@ -263,7 +286,7 @@ class PowerSpectraPopulations(PowerSpectra):
         r = np.exp(logR) * kpc
 
         if accel:
-            pref = (3 / 64) * ell ** 2 / r ** 2
+            pref = (3 / 4) * ell ** 2 / r ** 2
             units = (1e-6 * asctorad / Year ** 2) ** 2
         else:
             pref = 1
@@ -286,7 +309,7 @@ class PowerSpectraPopulations(PowerSpectra):
         #     if l <  self.l_cutoff: return 0
 
         if accel:
-            pref = (3 / 64) * ell ** 2 / l ** 2
+            pref = (3 / 4) * ell ** 2 / l ** 2
             units = (1e-6 * asctorad / Year ** 2) ** 2
         else:
             pref = 1
