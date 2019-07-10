@@ -161,6 +161,8 @@ class QuasarSim(SubhaloSample):
             # Grab some lens properties
             c200_lens, m_lens, d_lens = self.c200_sample[i_lens], self.M_sample[i_lens], self.d_sample[i_lens]
 
+            # self.mu_qsrs[idxs_qsrs_around] += self.mu_vec(d_lens * self.beta_lens_qsrs_around, d_lens * v_lens, c200_lens, m_lens)
+
             # Populate quasar induced velocity (and optionally accelerations) array
             for i_qsr, idx_qsr in enumerate((idxs_qsrs_around)):
 
@@ -172,6 +174,35 @@ class QuasarSim(SubhaloSample):
                     alpha_qsr = self.alpha(d_lens * self.beta_lens_qsrs_around[i_qsr], d_lens * v_lens, c200_lens,
                                            m_lens)
                     self.alpha_qsrs[idx_qsr] += alpha_qsr
+
+    def mu_vec(self, b_vec_ary, v_vec, *args_lens):
+        """ Get lens-induced velocity
+
+            :param b_vec: physical impact parameter (pointing lens to source) vector in rad
+            :param v_vec: physical velocity in natural units
+            :param args_lens: arguments going into enclosed mass function
+            :return: lens-induced velocity in as/yr
+        """
+
+        b_ary = np.linalg.norm(b_vec_ary, axis=1)  # Impact parameter
+        if self.sh_profile == "NFW":
+            MdMdb_func = self.MdMdb_NFW
+        elif self.sh_profile == "Plummer":
+            MdMdb_func = self.MdMdb_Plummer
+        elif self.sh_profile == "Gaussian":
+            MdMdb_func = self.MdMdb_Gauss
+        else:
+            raise Exception("Unknown profile specification!")
+
+        M, dMdb, _ = MdMdb_func(b_ary, *args_lens)
+        b_unit_vec_ary = np.transpose(np.transpose(b_vec_ary) / b_ary)  # Convert angular to physical impact parameter
+        b_dot_v_ary = np.dot(b_unit_vec_ary, v_vec)
+        factor1 = np.transpose(dMdb / b_ary * np.transpose(b_unit_vec_ary) * b_dot_v_ary)
+        factor2 = M / b_ary ** 2 * np.transpose(v_vec - 2 * np.transpose(np.transpose(b_unit_vec_ary) * b_dot_v_ary))
+
+        factor = factor1 + np.transpose(factor2)
+
+        return -factor * 4 * GN / (asctorad / Year)  # Convert to as/yr
 
     def mu(self, b_vec, v_vec, *args_lens):
         """ Get lens-induced velocity
