@@ -18,6 +18,8 @@ class Profiles:
 
     def __init__(self):
         self.c200_model = self.c200_SCP  # Set a default concentration model to start
+
+        # Set default function to numpy rather than mpmath, then switch where necessary
         self.sqrt = np.sqrt
         self.atan = np.arctan
         self.atanh = np.arctanh
@@ -127,8 +129,8 @@ class Profiles:
             return np.where(
                 x == 1.0,
                 1.0,
-                np.where(x <= 1.0, np.arctanh(np.sqrt(1.0 - x ** 2)) / (np.sqrt(1.0 - x ** 2)),
-                         np.arctan(np.sqrt(x ** 2 - 1.0)) / (np.sqrt(x ** 2 - 1.0))),
+                np.where(x <= 1.0, self.atanh(self.sqrt(1.0 - x ** 2)) / (self.sqrt(1.0 - x ** 2)),
+                         self.atan(self.sqrt(x ** 2 - 1.0)) / (self.sqrt(x ** 2 - 1.0))),
             )
     def dFdx(self, x):
         """ Helper function for NFW deflection, from astro-ph/0102341 eq. (49)
