@@ -57,7 +57,6 @@ class Profiles:
     # Enclosed masses and their derivatives
     ##################################################
 
-    @classmethod
     def MdMdb_NFW(self, b, c200, M200):
         """ NFW mass and derivative within a cylinder of radius `b`
 
@@ -75,7 +74,6 @@ class Profiles:
         d2Mdb2 = 4 * np.pi * r_s ** 2 * rho_s * (-(1 / (x ** 2 * r_s)) + self.d2Fdx2(x) / r_s)
         return M, dMdb, d2Mdb2
 
-    @classmethod
     def MdMdb_Gauss(self, b, R0, M0):
         """ Mass and derivative within a cylinder of radius `b`
             for a Gaussian lens
@@ -90,7 +88,6 @@ class Profiles:
 
         return M, dMdb, d2Mdb2
 
-    @classmethod
     def MdMdb_Plummer(self, b, R0, M0):
         """ Mass and derivative within a cylinder of radius `b`
             for a Plummer lens
@@ -109,16 +106,30 @@ class Profiles:
     # Helper functions
     ##################################################
 
-    def F(self, x):
-        """ Helper function for NFW deflection, from astro-ph/0102341 eq. (48)
-        """
-        if x > 1:
-            return self.atan(self.sqrt(x ** 2 - 1)) / (self.sqrt(x ** 2 - 1))
-        elif x == 1:
-            return 1
-        elif x < 1:
-            return self.atanh(self.sqrt(1 - x ** 2)) / (self.sqrt(1 - x ** 2))
+    # def F(self, x):
+    #     """ Helper function for NFW deflection, from astro-ph/0102341 eq. (48)
+    #     """
+    #     if x > 1:
+    #         return self.atan(self.sqrt(x ** 2 - 1)) / (self.sqrt(x ** 2 - 1))
+    #     elif x == 1:
+    #         return 1
+    #     elif x < 1:
+    #         return self.atanh(self.sqrt(1 - x ** 2)) / (self.sqrt(1 - x ** 2))
 
+    def F(self, x):
+        """
+        Helper function for NFW deflection, from astro-ph/0102341
+        TODO: returning warnings for invalid value in sqrt for some reason
+        JB: That's because all of the arguments of np.where are evaluated, including the ones with ngative arguments to
+        sqrt, but only the good ones are then returned. So we can just suppress these warnings
+        """
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return np.where(
+                x == 1.0,
+                1.0,
+                np.where(x <= 1.0, np.arctanh(np.sqrt(1.0 - x ** 2)) / (np.sqrt(1.0 - x ** 2)),
+                         np.arctan(np.sqrt(x ** 2 - 1.0)) / (np.sqrt(x ** 2 - 1.0))),
+            )
     def dFdx(self, x):
         """ Helper function for NFW deflection, from astro-ph/0102341 eq. (49)
         """
