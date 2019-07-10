@@ -40,6 +40,11 @@ class QuasarSim(SubhaloSample):
         self.calc_powerspecs = calc_powerspecs
         self.do_alpha = do_alpha
 
+        if self.verbose:
+            self.tqdm_function = tqdm_notebook
+        else:
+            self.tqdm_function = tqdm
+
         # Either simulate a uniform sample of background sources
         # or use Gaia DR2 quasars are source locations
         if sim_uniform:
@@ -133,7 +138,7 @@ class QuasarSim(SubhaloSample):
         self.mu_qsrs = np.zeros((self.n_qsrs, 2))
         self.alpha_qsrs = np.zeros((self.n_qsrs, 2))
 
-        for i_lens in tqdm_notebook(range(self.N_halos), disable=1 - self.verbose):
+        for i_lens in self.tqdm_function(range(self.N_halos)):
 
             # Lens velocity
             self.pm_l_cosb_lens = self.coords_galactic.pm_l_cosb.value[i_lens]
