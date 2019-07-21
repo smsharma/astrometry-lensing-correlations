@@ -267,7 +267,7 @@ class PowerSpectraPopulations(PowerSpectra):
             units = (1e-6 * asctorad / Year) ** 2
 
         return pref * l * m * self.Cl_NFW(m, l, 1, ell, r) / units * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r,
-                                                                                **self.rho_R_kwargs) * l **2 / r**2
+                                                                                                                     **self.rho_R_kwargs) * l ** 2 / r ** 2
 
     def integrand_gc(self, x, ell, accel=False):
         """
@@ -306,11 +306,11 @@ class PowerSpectraPopulations(PowerSpectra):
 
         if not self.R0_DM == 0:
             return pref * l * self.Cl_Gauss(self.R0_DM, self.M_DM, l, 1, ell) / units * self.rho_R(r,
-                                                                                                   **self.rho_R_kwargs)\
-                   * l **2 / r**2
+                                                                                                   **self.rho_R_kwargs) \
+                   * l ** 2 / r ** 2
         else:
             return pref * l * self.Cl_Point(self.M_DM, l, 1, ell) / units * self.rho_R(r, **self.rho_R_kwargs) \
-                   * l **2 / r**2
+                   * l ** 2 / r ** 2
 
     def C_l_total(self, ell, theta_deg_mask=0, l_los_min=0.1 * kpc, l_los_max=200 * kpc, accel=False):
         """
@@ -371,7 +371,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         return self.pref * integ
 
-    def C_l_compact_total(self, ell, theta_deg_mask=0,  l_los_min=0.1 * kpc, l_los_max=200 * kpc, accel=False):
+    def C_l_compact_total(self, ell, theta_deg_mask=0, l_los_min=0.1 * kpc, l_los_max=200 * kpc, accel=False):
         """
         Get total population power spectrum at given multipole for compact objects
         TODO: double check number of integration points and integration ranges
@@ -470,12 +470,16 @@ class PowerSpectraPopulations(PowerSpectra):
         if self.R0_DM == 0:
             if accel:
                 self.C_l_ary = self.l_ary ** 2 * np.array(len(self.l_ary) * \
-                                [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=True, l_los_min=l_los_min, l_los_max=l_los_max)])
+                                                          [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask,
+                                                                                  accel=True, l_los_min=l_los_min,
+                                                                                  l_los_max=l_los_max)])
             else:
                 self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1,
-                                theta_deg_mask=theta_deg_mask, accel=False, l_los_min=l_los_min, l_los_max=l_los_max)]
+                                                                         theta_deg_mask=theta_deg_mask, accel=False,
+                                                                         l_los_min=l_los_min, l_los_max=l_los_max)]
         else:
-            C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min, l_los_max=l_los_max) for ell in
+            C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min,
+                                                   l_los_max=l_los_max) for ell in
                             (self.l_ary_calc)]
             self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return np.array(self.C_l_ary)
