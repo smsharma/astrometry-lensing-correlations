@@ -38,7 +38,7 @@ def P(k) :
 #    It is safer to set k_per_decade primordial slightly bigger than that of Class.
 
 k_min  = 1.e-6
-k_max  = 20.
+k_max  = 500.
 k_per_decade_primordial = 200.
 
 #
