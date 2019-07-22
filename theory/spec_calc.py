@@ -70,7 +70,11 @@ class PowerSpectra(Profiles):
         else:
             kwargs = {}
         r_s, rho_s = self.get_rs_rhos_NFW(M200, **kwargs)
-        M0 = 4 * np.pi * r_s ** 3 * rho_s
+
+        if self.CLASS_inst is not None:
+            M0 = M200 / (-0.5 + np.log(2))
+        else:
+            M0 = 4 * np.pi * r_s ** 3 * rho_s
         pref = GN ** 2 * v ** 2 * 8 * np.pi * l ** 2 / Dl ** 4
         theta_s = r_s / Dl
         if not self.precompute_NFW:
@@ -116,7 +120,7 @@ class PowerSpectra(Profiles):
 
 
 class PowerSpectraPopulations(PowerSpectra):
-    def __init__(self, l_min=1, l_max=5000, n_l=50):
+    def __init__(self, l_min=1, l_max=5000, n_l=50, CLASS_inst=None, fudge_factor_rho_s=None):
         """
         Class to calculate power spectra of populations
 
@@ -124,6 +128,9 @@ class PowerSpectraPopulations(PowerSpectra):
         :param l_max: Maximum multipole
         :param n_l: Number of multipoles interpolated over
         """
+
+        self.CLASS_inst = CLASS_inst
+        self.fudge_factor_rho_s = fudge_factor_rho_s
 
         PowerSpectra.__init__(self)
 
