@@ -1,6 +1,6 @@
 # Data and temporary notebooks
-*.npy
-*.npz
+# *.npy
+# *.npz
 .ipynb_checkpoints
 .coverage
 
