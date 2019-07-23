@@ -24,11 +24,14 @@ results=parser.parse_args()
 nB = results.nB
 kB = results.kB
 
-gen_file = '/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/theory/arrays/pk/generate_Pk_kink.py'
+gen_file = '/home/sm8383/Lensing-PowerSpectra/theory/arrays/pk/generate_Pk_kink.py'
 save_dir  = '/scratch/sm8383/QuasarSim'
+
 # Get class instance with custom primordial power spectrum
 
 mfk = MassFunctionKink(gen_file=gen_file)
+
+print("Getting CLASS instances")
 
 CLASS_inst_vanilla = mfk.get_CLASS_kink(k_B=kB, n_B=0.9665)
 CLASS_inst = mfk.get_CLASS_kink(k_B=kB, n_B=nB)
@@ -57,6 +60,8 @@ N_calib = 150.
 pref = N_calib / quad(lambda M: mfk.dn_dM_s(M, CLASS_inst_vanilla), 1e8 * M_s, 1e10 * M_s, epsabs=0, epsrel=1e-4)[0]
 N_calib_new = pref * quad(lambda M: mfk.dn_dM_s(M, CLASS_inst), 1e8 * M_s, 1e10 * M_s, epsabs=0, epsrel=1e-2)[0]
 
+print("Calibrating to " + str(N_calib_new) + " objects")
+
 M_sc_calib = 1e11 * M_s
 pspecpop = PowerSpectraPopulations(l_max=2000, CLASS_inst=CLASS_inst, fudge_factor_rho_s=1.)
 rho_s_new = pspecpop.get_rs_rhos_NFW(M_sc_calib)[1]
@@ -66,6 +71,8 @@ pspecpop = PowerSpectraPopulations(l_max=2000)
 rho_s_old = pspecpop.get_rs_rhos_NFW(M200)[1]
 
 fudge_factor_rho_s = rho_s_old / rho_s_new
+
+print("Density fudge factor is " + str(fudge_factor_rho_s))
 
 # Get power spectrum
 
