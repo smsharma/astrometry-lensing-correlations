@@ -24,8 +24,8 @@ results=parser.parse_args()
 nB = results.nB
 kB = results.kB
 
-gen_file = '/home/sm8383/Lensing-PowerSpectra/theory/arrays/pk/generate_Pk_kink.py'
-save_dir  = '/scratch/sm8383/QuasarSim'
+gen_file = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/generate_Pk_kink.py'
+save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster_out/'
 
 # Get class instance with custom primordial power spectrum
 
