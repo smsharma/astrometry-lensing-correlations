@@ -465,7 +465,7 @@ class PowerSpectraPopulations(PowerSpectra):
         """
         C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min,
                                        l_los_max=l_los_max) for ell in
-                        tqdm_notebook(self.l_ary_calc)]
+                        tqdm(self.l_ary_calc)]
         self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(C_l_calc_ary))
         return self.C_l_ary
 
