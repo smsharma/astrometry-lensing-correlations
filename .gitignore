@@ -3,6 +3,8 @@
 # *.npz
 .ipynb_checkpoints
 .coverage
+batch
+*.batch
 
 # Cython output
 *.pyc
