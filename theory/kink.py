@@ -17,7 +17,7 @@ class MassFunctionKink:
         self.n_s = n_s
         self.gen_file = gen_file
 
-    def get_CLASS_kink(self, k_B=0.1, n_B=0.9665):
+    def get_CLASS_kink(self, k_B=0.1, n_B=0.9665, k_max=1000):
         common_settings = {  # Background parameters
             'H0': 67.32117,
             'omega_b': 0.02238280,
@@ -31,7 +31,7 @@ class MassFunctionKink:
 
             # Output settings
             'output': 'mPk',
-            'P_k_max_1/Mpc': 1000.0,
+            'P_k_max_1/Mpc': k_max,
             'k_per_decade_for_pk':5,
             'k_per_decade_for_bao':20,
             'P_k_ini type': 'external_Pk',
@@ -40,7 +40,8 @@ class MassFunctionKink:
             'custom2': self.A_s,
             'custom3': self.n_s,
             'custom4': k_B,
-            'custom5': n_B
+            'custom5': n_B,
+            'custom6': 1.5 * k_max
         }
 
         CLASS_inst = Class()

@@ -17,6 +17,7 @@ try :
     n_s           = float(sys.argv[3])
     k_B           = float(sys.argv[4])
     n_B           = float(sys.argv[5])
+    k_max           = float(sys.argv[6])
 
 # Error control, no need to touch
 except IndexError :
@@ -38,7 +39,6 @@ def P(k) :
 #    It is safer to set k_per_decade primordial slightly bigger than that of Class.
 
 k_min  = 1.e-6
-k_max  = 1500.
 k_per_decade_primordial = 20.
 
 #
