@@ -81,10 +81,11 @@ N_calib_new = pref * quad(lambda M: 10 ** dndlnM_interp(np.log10(M)), 1e8 * M_s,
 
 sig = Sigma(log10_P_interp)
 
-M_ary_conc = np.logspace(3.5, 13, 20) * M_s
+M_ary_conc = np.logspace(6, 13, 10) * M_s
 c200_ary = [sig.c200_zcoll(M)[0] for M in tqdm(M_ary_conc)]
 
-c200_interp = interp1d(np.log10(M_ary_conc), np.log10(c200_ary))
+c200_interp = interp1d(np.log10(M_ary_conc), np.log10(c200_ary), bounds_error=False,
+                              fill_value='extrapolate')
 
 def dndM(M):
     return 10 ** dndlnM_interp(np.log10(M))
