@@ -270,7 +270,7 @@ class Profiles:
 
         if self.CLASS_inst is not None:
             rho_s = self.fudge_factor_rho_s * rho_m * 200 * np.max([self.CLASS_inst.sigma((M200 / (4 / 3. * np.pi * rho_m)) ** (1 / 3.) / Mpc, 0), delta_c]) / 4.
-            r_s = (M200 / (4 * np.pi * rho_s)) ** (1 / 3.)
+            r_s = (M200 / (4 * np.pi * rho_s * (-0.5 + np.log(2)))) ** (1 / 3.)
         else:
             c200 = self.c200_model(M200, **kwargs)
             r200 = (M200 / (4 / 3. * np.pi * 200 * rho_c)) ** (1 / 3.)

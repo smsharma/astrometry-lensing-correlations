@@ -31,7 +31,9 @@ class MassFunctionKink:
 
             # Output settings
             'output': 'mPk',
-            'P_k_max_1/Mpc': 400.0,
+            'P_k_max_1/Mpc': 1000.0,
+            'k_per_decade_for_pk':5,
+            'k_per_decade_for_bao':20,
             'P_k_ini type': 'external_Pk',
             'command': "python " + str(self.gen_file),
             'custom1': 0.05,
