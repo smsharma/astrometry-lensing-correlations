@@ -10,8 +10,13 @@ from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
 
 from theory.spec_calc import PowerSpectra, PowerSpectraPopulations
-from theory.kink import MassFunctionKink
+from theory.kink import MassFunctionKink, Sigma
 from theory.units import *
+
+sys.path.append('/Users/smsharma/heptools/colossus/')
+
+from colossus.cosmology import cosmology
+from colossus.lss import mass_function
 
 # Command line arguments
 
@@ -31,64 +36,70 @@ save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster
 
 mfk = MassFunctionKink(gen_file=gen_file)
 
-print("Getting CLASS instances")
+CLASS_inst = mfk.get_CLASS_kink(k_B=kB, n_B=nB, k_max=1e2)
+CLASS_inst_vanilla = mfk.get_CLASS_kink(k_B=kB, n_B=0.9665, k_max=1e2)
 
-CLASS_inst_vanilla = mfk.get_CLASS_kink(k_B=kB, n_B=0.9665)
-CLASS_inst = mfk.get_CLASS_kink(k_B=kB, n_B=nB)
+for idnx, inst in enumerate([CLASS_inst_vanilla, CLASS_inst]):
+    k_ary = np.logspace(-6, np.log10(1e2), 10000)
+    Pk_ary = np.array([inst.pk_lin(k, 0) for k in k_ary])
 
-# Get power spectrum
+    log10_k_interp_ary = np.linspace(-6, 7, 10000)
+    log10_P_interp = interp1d(np.log10(k_ary * h), np.log10(Pk_ary / h ** 3), bounds_error=False,
+                              fill_value='extrapolate')
+    log10_P_interp_ary = (log10_P_interp)(log10_k_interp_ary)
 
-k_ary = np.logspace(-5, np.log10(400))
-pk_ary = np.array([CLASS_inst.pk_lin(k,0) for k in k_ary])
+    if idnx == 1:
+        filename = 'pk.dat'
+    else:
+        filename = 'pk_base.dat'
 
-# Get mass function
+    np.savetxt("/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/" + filename,
+               np.transpose([log10_k_interp_ary, log10_P_interp_ary]),
+               delimiter='\t')
 
-M_ary = np.logspace(4, 12) * M_s
-dndM_ary = np.array([mfk.dn_dM_s(M, CLASS_inst) for M in M_ary])
-dndM_interp = interp1d(np.log10(M_ary), np.log10(dndM_ary))
+# Get mass function from colossus
+
+cosmo = cosmology.setCosmology('planck18')
+
+M_ary = np.logspace(5,12)
+
+dndlnM_vanilla_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':"/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/theory/arrays/pk_base.dat"})
+dndlnM_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':"/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/theory/arrays/pk.dat"})
+
+dndlnM_vanilla_interp = interp1d(np.log10(M_ary * M_s), np.log10(dndlnM_vanilla_ary / M_ary))
+dndlnM_interp = interp1d(np.log10(M_ary * M_s), np.log10(dndlnM_ary / M_ary))
+
+# Calibrate to number density at high masses
+N_calib = 150.
+
+pref = N_calib / quad(lambda M: 10 ** dndlnM_vanilla_interp(np.log10(M)), 1e8 * M_s, 1e10 * M_s, epsabs=0, epsrel=1e-4)[0]
+N_calib_new = pref * quad(lambda M: 10 ** dndlnM_interp(np.log10(M)), 1e8 * M_s, 1e10 * M_s, epsabs=0, epsrel=1e-4)[0]
+
+# Get c200
+
+sig = Sigma(log10_P_interp)
+
+M_ary = np.logspace(4, 13, 10) * M_s
+c200_ary = [sig.c200_zcoll(M)[0] for M in tqdm(M_ary)]
+
+c200_interp = interp1d(np.log10(M_ary), np.log10(c200_ary))
 
 def dndM(M):
-    return 10 ** dndM_interp(np.log10(M))
+    return 10 ** dndlnM_interp(np.log10(M))
 
-# Calibration
 
-pspec = PowerSpectra(precompute=['NFW', 'Burk'])
+def c200_custom(M):
+    return 10 ** c200_interp(np.log10(M))
 
-# Number calibration ("fudging")
-
-N_calib = 150.
-pref = N_calib / quad(lambda M: mfk.dn_dM_s(M, CLASS_inst_vanilla), 1e8 * M_s, 1e10 * M_s, epsabs=0, epsrel=1e-4)[0]
-N_calib_new = pref * quad(lambda M: mfk.dn_dM_s(M, CLASS_inst), 1e8 * M_s, 1e10 * M_s, epsabs=0, epsrel=1e-2)[0]
-
-print("Calibrating to " + str(N_calib_new) + " objects")
-
-M_sc_calib = 1e11 * M_s
-pspecpop = PowerSpectraPopulations(l_max=2000, CLASS_inst=CLASS_inst, fudge_factor_rho_s=1.)
-rho_s_new = pspecpop.get_rs_rhos_NFW(M_sc_calib)[1]
-
-M200 = 10 ** fsolve(lambda M200: np.log10(M_sc_calib / M_s) - np.log10(pspecpop.get_M_sc(10 ** M200 * M_s) / M_s), 9.)[0] * M_s
 pspecpop = PowerSpectraPopulations(l_max=2000)
-rho_s_old = pspecpop.get_rs_rhos_NFW(M200)[1]
-
-fudge_factor_rho_s = rho_s_old / rho_s_new
-
-print("Density fudge factor is " + str(fudge_factor_rho_s))
-
-# Get power spectrum
-
-pspecpop = PowerSpectraPopulations(l_max=2000, CLASS_inst=CLASS_inst, fudge_factor_rho_s=fudge_factor_rho_s)
 
 pspecpop.set_radial_distribution(pspecpop.r2rho_V_NFW, R_min=1e-2*kpc, R_max=260*kpc)
 pspecpop.set_mass_distribution(dndM, M_min=1e4*M_s, M_max=0.01*1.1e12*M_s,
                                M_min_calib=1e8*M_s, M_max_calib=1e10*M_s, N_calib=N_calib_new)
-pspecpop.set_subhalo_properties(pspecpop.c200_Moline)
+pspecpop.set_subhalo_properties(c200_custom)
 
 C_l_mu_new = pspecpop.get_C_l_total_ary()
 
 np.savez(save_dir + '/' + str(kB) + '_' + str(nB) + ".npz",
-         k_ary=k_ary,
-         pk_ary=pk_ary,
-         M_ary=M_ary,
-         dndM_ary=dndM_ary,
          C_l_mu_new=C_l_mu_new
          )
