@@ -5,7 +5,7 @@ from astropy.cosmology import Planck15
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 from scipy.misc import derivative
-from scipy.optimize import minimize
+from scipy.optimize import minimize, fsolve
 from scipy.special import erfc
 from classy import Class
 import random, string
@@ -70,14 +70,21 @@ class Sigma():
         c200_ary[0] = 10.
 
         for i in range(1, n_iter_max):
-            z_coll_ary[i] = minimize(lambda z_coll: np.abs(
+            # z_coll_ary[i] = minimize(lambda z_coll: np.abs(
+            #     erfc((self.delta_sc(z_coll) - self.delta_sc(0)) / (np.sqrt(2 * (self.sigma(f * M200) ** 2 - self.sigma(M200) ** 2)))) - (
+            #                 (-1 + np.log(4)) / 2. / (-1 + 1 / (1 + c200_ary[i - 1]) + np.log(1 + c200_ary[i - 1])))),
+            #                          [10.], bounds=[[0.1, 2000.]], method='L-BFGS-B').x
+            # c200_ary[i] = minimize(lambda c200: np.abs(
+            #     C * (Planck15.H(z_coll_ary[i]).value / Planck15.H0.value) ** 2 - (
+            #                 200. / 3. / 4. * c200 ** 3 / (np.log(1 + c200) - c200 / (1 + c200)))), [3000.],
+            #                        bounds=[[1., 1e5]], method='L-BFGS-B').x
+            z_coll_ary[i] = fsolve(lambda z_coll: np.abs(
                 erfc((self.delta_sc(z_coll) - self.delta_sc(0)) / (np.sqrt(2 * (self.sigma(f * M200) ** 2 - self.sigma(M200) ** 2)))) - (
                             (-1 + np.log(4)) / 2. / (-1 + 1 / (1 + c200_ary[i - 1]) + np.log(1 + c200_ary[i - 1])))),
-                                     [10.], bounds=[[0.1, 2000.]], method='SLSQP').x
-            c200_ary[i] = minimize(lambda c200: np.abs(
+                                     10.)[0]
+            c200_ary[i] = fsolve(lambda c200: np.abs(
                 C * (Planck15.H(z_coll_ary[i]).value / Planck15.H0.value) ** 2 - (
-                            200. / 3. / 4. * c200 ** 3 / (np.log(1 + c200) - c200 / (1 + c200)))), [10.],
-                                   bounds=[[1., 1e4]], method='SLSQP').x
+                            200. / 3. / 4. * c200 ** 3 / (np.log(1 + c200) - c200 / (1 + c200)))), 10000.)
 
             z_err = np.abs((z_coll_ary[i] - z_coll_ary[i - 1]) / z_coll_ary[i - 1])
             c200_err = np.abs((c200_ary[i] - c200_ary[i - 1]) / c200_ary[i - 1])
