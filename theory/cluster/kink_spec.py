@@ -13,7 +13,7 @@ from theory.spec_calc import PowerSpectra, PowerSpectraPopulations
 from theory.kink import MassFunctionKink, Sigma
 from theory.units import *
 
-sys.path.append('/Users/smsharma/heptools/colossus/')
+sys.path.append('/group/hepheno/smsharma/heptools/colossus/')
 
 from colossus.cosmology import cosmology
 from colossus.lss import mass_function
@@ -29,12 +29,12 @@ results=parser.parse_args()
 nB = results.nB
 kB = results.kB
 
-gen_file = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/generate_Pk_kink.py'
+pk_dir = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/'
 save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster_out/'
 
 # Get class instance with custom primordial power spectrum
 
-mfk = MassFunctionKink(gen_file=gen_file)
+mfk = MassFunctionKink(gen_file=pk_dir + 'generate_Pk_kink.py')
 
 CLASS_inst = mfk.get_CLASS_kink(k_B=kB, n_B=nB, k_max=1e2)
 CLASS_inst_vanilla = mfk.get_CLASS_kink(k_B=kB, n_B=0.9665, k_max=1e2)
@@ -49,22 +49,24 @@ for idnx, inst in enumerate([CLASS_inst_vanilla, CLASS_inst]):
     log10_P_interp_ary = (log10_P_interp)(log10_k_interp_ary)
 
     if idnx == 1:
-        filename = 'pk.dat'
+        file_kinked = pk_dir + 'pk' + str(kB) + '_' + str(nB) + '.dat'
+        np.savetxt(file_kinked,
+           np.transpose([log10_k_interp_ary, log10_P_interp_ary]),
+           delimiter='\t')
     else:
-        filename = 'pk_base.dat'
-
-    np.savetxt("/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/" + filename,
-               np.transpose([log10_k_interp_ary, log10_P_interp_ary]),
-               delimiter='\t')
+        file_base = pk_dir + 'pk' + str(kB) + '_' + str(nB) + '_base.dat'
+        np.savetxt(file_base,
+           np.transpose([log10_k_interp_ary, log10_P_interp_ary]),
+           delimiter='\t')
 
 # Get mass function from colossus
 
 cosmo = cosmology.setCosmology('planck18')
 
-M_ary = np.logspace(5,12)
+M_ary = np.logspace(3.5, 12, 50)
 
-dndlnM_vanilla_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':"/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/theory/arrays/pk_base.dat"})
-dndlnM_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':"/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/theory/arrays/pk.dat"})
+dndlnM_vanilla_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':file_base})
+dndlnM_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':file_kinked})
 
 dndlnM_vanilla_interp = interp1d(np.log10(M_ary * M_s), np.log10(dndlnM_vanilla_ary / M_ary))
 dndlnM_interp = interp1d(np.log10(M_ary * M_s), np.log10(dndlnM_ary / M_ary))
@@ -79,14 +81,13 @@ N_calib_new = pref * quad(lambda M: 10 ** dndlnM_interp(np.log10(M)), 1e8 * M_s,
 
 sig = Sigma(log10_P_interp)
 
-M_ary = np.logspace(4, 13, 10) * M_s
-c200_ary = [sig.c200_zcoll(M)[0] for M in tqdm(M_ary)]
+M_ary_conc = np.logspace(3.5, 13, 20) * M_s
+c200_ary = [sig.c200_zcoll(M)[0] for M in tqdm(M_ary_conc)]
 
-c200_interp = interp1d(np.log10(M_ary), np.log10(c200_ary))
+c200_interp = interp1d(np.log10(M_ary_conc), np.log10(c200_ary))
 
 def dndM(M):
     return 10 ** dndlnM_interp(np.log10(M))
-
 
 def c200_custom(M):
     return 10 ** c200_interp(np.log10(M))
