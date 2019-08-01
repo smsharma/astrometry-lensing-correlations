@@ -81,8 +81,11 @@ N_calib_new = pref * quad(lambda M: 10 ** dndlnM_interp(np.log10(M)), 1e8 * M_s,
 
 sig = Sigma(log10_P_interp)
 
+M_calib = 1e12 * M_s
+C_calib = fsolve(lambda C: sig.c200_zcoll(M_calib, C=C, f=0.02)[0] - pspecpop.c200_SCP(M_calib), 75., xtol=0.2)[0]
+
 M_ary_conc = np.logspace(6, 13, 10) * M_s
-c200_ary = [sig.c200_zcoll(M)[0] for M in tqdm(M_ary_conc)]
+c200_ary = [sig.c200_zcoll(M, C=C_calib, f=0.02)[0] for M in tqdm(M_ary_conc)]
 
 c200_interp = interp1d(np.log10(M_ary_conc), np.log10(c200_ary), bounds_error=False,
                               fill_value='extrapolate')
@@ -102,6 +105,6 @@ pspecpop.set_subhalo_properties(c200_custom)
 
 C_l_mu_new = pspecpop.get_C_l_total_ary()
 
-np.savez(save_dir + '/' + str(kB) + '_' + str(nB) + ".npz",
+np.savez(save_dir + '/calib_' + str(kB) + '_' + str(nB) + ".npz",
          C_l_mu_new=C_l_mu_new
          )
