@@ -82,6 +82,7 @@ N_calib_new = pref * quad(lambda M: 10 ** dndlnM_interp(np.log10(M)), 1e8 * M_s,
 sig = Sigma(log10_P_interp)
 
 M_calib = 1e12 * M_s
+pspecpop = PowerSpectraPopulations()
 C_calib = fsolve(lambda C: sig.c200_zcoll(M_calib, C=C, f=0.02)[0] - pspecpop.c200_SCP(M_calib), 75., xtol=0.2)[0]
 
 M_ary_conc = np.logspace(6, 13, 10) * M_s
