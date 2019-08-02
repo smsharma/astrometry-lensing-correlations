@@ -25,8 +25,8 @@ cd /group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/
 
 '''
 
-n_B_ary = [0.9665] + list(np.linspace(1, 2, 11))
-k_B_ary = np.logspace(np.log10(1), np.log10(50), 11)
+n_B_ary = [0.9665] + list(np.linspace(1, 3, 11))
+k_B_ary = np.logspace(np.log10(5), np.log10(50), 11)
 
 for n_B in n_B_ary:
     for k_B in k_B_ary:
