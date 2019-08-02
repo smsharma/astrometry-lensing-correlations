@@ -240,7 +240,7 @@ class Profiles:
         else:
             print("Precomputing Burkert parameters")
 
-            l_min, l_max = 1, 10000
+            l_min, l_max = 1, 2000
             l_ary = np.logspace(np.log10(l_min), np.log10(l_max), n_l)
 
             theta_b_min, theta_b_max = 0.001, 4

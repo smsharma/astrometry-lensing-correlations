@@ -82,11 +82,9 @@ N_calib_new = pref * quad(lambda M: 10 ** dndlnM_interp(np.log10(M)), 1e8 * M_s,
 sig = Sigma(log10_P_interp)
 
 M_calib = 1e12 * M_s
-# pspecpop = PowerSpectraPopulations()
-# C_calib = fsolve(lambda C: sig.c200_zcoll(M_calib, C=C, f=0.02)[0] - pspecpop.c200_SCP(M_calib), 75., xtol=0.2)[0]
 
-M_ary_conc = np.logspace(6, 13, 10) * M_s
-c200_ary = [sig.c200_zcoll(M, C=75., f=0.02)[0] for M in tqdm(M_ary_conc)]
+M_ary_conc = np.logspace(7, 13, 10) * M_s
+c200_ary = [sig.c200_zcoll(M, C=100., f=0.02)[0] for M in tqdm(M_ary_conc)]
 
 c200_interp = interp1d(np.log10(M_ary_conc), np.log10(c200_ary), bounds_error=False,
                               fill_value='extrapolate')
@@ -97,15 +95,17 @@ def dndM(M):
 def c200_custom(M):
     return 10 ** c200_interp(np.log10(M))
 
-pspecpop = PowerSpectraPopulations(l_max=2000)
+pspecpop = PowerSpectraPopulations(l_max=10000)
 
 pspecpop.set_radial_distribution(pspecpop.r2rho_V_NFW, R_min=1e-2*kpc, R_max=260*kpc)
 pspecpop.set_mass_distribution(dndM, M_min=1e4*M_s, M_max=0.01*1.1e12*M_s,
                                M_min_calib=1e8*M_s, M_max_calib=1e10*M_s, N_calib=N_calib_new)
 pspecpop.set_subhalo_properties(c200_custom)
 
-C_l_mu_new = pspecpop.get_C_l_total_ary()
+C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=pspecpop.l_cutoff)
+C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=pspecpop.l_cutoff, accel=True)
 
 np.savez(save_dir + '/calib2_' + str(kB) + '_' + str(nB) + ".npz",
-         C_l_mu_new=C_l_mu_new
+         C_l_mu_new=C_l_mu_new,
+         C_l_alpha_new=C_l_alpha_new
          )

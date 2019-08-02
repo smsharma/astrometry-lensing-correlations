@@ -144,6 +144,13 @@ class PowerSpectraPopulations(PowerSpectra):
         M200, r = np.exp(x[0]) * M_s, np.exp(x[1]) * kpc
         return 4 * np.pi * M200 * r * self.rho_M(M200, **self.rho_M_kwargs) * self.rho_R(r)
 
+    def integrand_norm_mass(self, x):
+        """ Integrand for calculating overall normalization of
+            joint mass-radial distribution pdf
+        """
+        M200 = np.exp(x[0]) * M_s
+        return M200 * self.rho_M(M200, **self.rho_M_kwargs)
+
     def integrand_norm_compact(self, x):
         """ Integrand for calculating overall normalization of 
             joint mass-radial distribution pdf for compact objects
@@ -208,7 +215,21 @@ class PowerSpectraPopulations(PowerSpectra):
 
         norm *= measure
 
+        logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 500)
+        measure_mass = (logM_integ_ary[1] - logM_integ_ary[0])
+
+        self.norm_mass = 0
+
+        for logM in logM_integ_ary:
+            self.norm_mass += self.integrand_norm_mass([logM])
+
+        self.norm_mass *= measure_mass
+
         self.pref = self.N_calib / norm
+
+        l_los_ary = np.logspace(-3, 5, 200) * pc
+        n_lens_ary = [self.n_lens(l_los_max=l_max) for l_max in l_los_ary]
+        self.l_cutoff = (10 ** np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary)))
 
     def set_mass_distribution_compact(self, M_DM, f_DM, R0_DM=0):
         # TODO: Stabilize distributions
@@ -233,6 +254,55 @@ class PowerSpectraPopulations(PowerSpectra):
         l_los_ary = np.logspace(-2, 2, 100) * kpc
         n_lens_ary = [self.n_lens_compact(l_los_max=l_max) for l_max in l_los_ary]
         self.l_cutoff = (10 ** np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary)))
+
+    def n_lens(self, l_los_max, l_los_min=0 * kpc):
+        """
+        Number of lenses between los distance l_los_min and l_los_max:
+        """
+
+        def integrand_n_lens(x):
+            l, theta = x[0], x[1]
+            r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
+            return self.rho_R(r, **self.rho_R_kwargs) / r ** 2 * l ** 2
+
+        l_los_integ_ary = np.linspace(l_los_min, l_los_max, 50)
+        # logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 50)
+        theta_integ_ary = np.linspace(0, np.pi, 50)
+
+        measure = (l_los_integ_ary[1] - l_los_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0])
+
+        integ = 0
+
+        for l_los in l_los_integ_ary:
+            for theta in theta_integ_ary:
+                integ += np.sin(theta) * integrand_n_lens([l_los, theta])
+        integ *= 2 * np.pi * measure
+
+        return self.pref * integ * self.norm_mass
+
+    def n_lens_compact(self, l_los_max, l_los_min=0 * kpc):
+        """
+        Number of lenses between los distance l_los_min and l_los_max:
+        """
+
+        def integrand_n_lens(x):
+            l, theta = x[0], x[1]
+            r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
+            return self.rho_R(r, **self.rho_R_kwargs) / r ** 2 * l ** 2
+
+        l_los_integ_ary = np.linspace(l_los_min, l_los_max, 50)
+        theta_integ_ary = np.linspace(0, np.pi, 50)
+
+        measure = (l_los_integ_ary[1] - l_los_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0])
+
+        integ = 0
+
+        for l_los in l_los_integ_ary:
+            for theta in theta_integ_ary:
+                integ += np.sin(theta) * integrand_n_lens([l_los, theta])
+        integ *= 2 * np.pi * measure
+
+        return self.pref * integ
 
     def set_subhalo_properties(self, c200_model):
         """
@@ -347,30 +417,6 @@ class PowerSpectraPopulations(PowerSpectra):
             v_term = self.vsq_proj_mean
 
         return self.pref * integ * v_term
-
-    def n_lens_compact(self, l_los_max, l_los_min=0 * kpc):
-        """
-        Number of lenses between los distance l_los_min and l_los_max:
-        """
-
-        def integrand_n_lens(x):
-            l, theta = x[0], x[1]
-            r = np.sqrt(l ** 2 + Rsun ** 2 - 2 * l * Rsun * np.cos(theta))
-            return self.rho_R(r, **self.rho_R_kwargs) / r ** 2 * l ** 2
-
-        l_los_integ_ary = np.linspace(l_los_min, l_los_max, 50)
-        theta_integ_ary = np.linspace(0, np.pi, 50)
-
-        measure = (l_los_integ_ary[1] - l_los_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0])
-
-        integ = 0
-
-        for l_los in l_los_integ_ary:
-            for theta in theta_integ_ary:
-                integ += np.sin(theta) * integrand_n_lens([l_los, theta])
-        integ *= 2 * np.pi * measure
-
-        return self.pref * integ
 
     def C_l_compact_total(self, ell, theta_deg_mask=0, l_los_min=0.1 * kpc, l_los_max=200 * kpc, accel=False):
         """
