@@ -98,7 +98,7 @@ def c200_custom(M):
 pspecpop = PowerSpectraPopulations(l_max=10000)
 
 pspecpop.set_radial_distribution(pspecpop.r2rho_V_NFW, R_min=1e-2*kpc, R_max=260*kpc)
-pspecpop.set_mass_distribution(dndM, M_min=1e4*M_s, M_max=0.01*1.1e12*M_s,
+pspecpop.set_mass_distribution(dndM, M_min=1e1*M_s, M_max=0.01*1.1e12*M_s,
                                M_min_calib=1e8*M_s, M_max_calib=1e10*M_s, N_calib=N_calib_new)
 pspecpop.set_subhalo_properties(c200_custom)
 
