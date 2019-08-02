@@ -43,7 +43,7 @@ for idnx, inst in enumerate([CLASS_inst_vanilla, CLASS_inst]):
     k_ary = np.logspace(-6, np.log10(1e2), 10000)
     Pk_ary = np.array([inst.pk_lin(k, 0) for k in k_ary])
 
-    log10_k_interp_ary = np.linspace(-6, 7, 10000)
+    log10_k_interp_ary = np.linspace(-6, 10, 10000)
     log10_P_interp = interp1d(np.log10(k_ary * h), np.log10(Pk_ary / h ** 3), bounds_error=False,
                               fill_value='extrapolate')
     log10_P_interp_ary = (log10_P_interp)(log10_k_interp_ary)
@@ -63,7 +63,7 @@ for idnx, inst in enumerate([CLASS_inst_vanilla, CLASS_inst]):
 
 cosmo = cosmology.setCosmology('planck18')
 
-M_ary = np.logspace(3.5, 12, 50)
+M_ary = np.logspace(1, 12, 50)
 
 dndlnM_vanilla_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':file_base})
 dndlnM_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':file_kinked})
