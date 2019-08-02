@@ -63,7 +63,7 @@ for idnx, inst in enumerate([CLASS_inst_vanilla, CLASS_inst]):
 
 cosmo = cosmology.setCosmology('planck18')
 
-M_ary = np.logspace(1, 12, 50)
+M_ary = np.logspace(4, 12, 50)
 
 dndlnM_vanilla_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':file_base})
 dndlnM_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':file_kinked})
@@ -98,7 +98,7 @@ def c200_custom(M):
 pspecpop = PowerSpectraPopulations(l_max=10000)
 
 pspecpop.set_radial_distribution(pspecpop.r2rho_V_NFW, R_min=1e-2*kpc, R_max=260*kpc)
-pspecpop.set_mass_distribution(dndM, M_min=1e-2*M_s, M_max=0.01*1.1e12*M_s,
+pspecpop.set_mass_distribution(dndM, M_min=1e-6*M_s, M_max=0.01*1.1e12*M_s,
                                M_min_calib=1e8*M_s, M_max_calib=1e10*M_s, N_calib=N_calib_new)
 pspecpop.set_subhalo_properties(c200_custom)
 
