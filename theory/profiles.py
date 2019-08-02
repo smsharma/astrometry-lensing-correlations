@@ -195,12 +195,12 @@ class Profiles:
         return mp.quadosc(lambda theta: self.MBurkdivM0(theta / theta_b) * mp.j1(l * theta), [0, mp.inf],
                           period=2 * mp.pi / l)
 
-    def precompute_MNFWdivM0(self, n_l=20, n_theta_s=20):
+    def precompute_MNFWdivM0(self, n_l=100, n_theta_s=50):
         """ Precompute enclosed mass integral for NFW profile
         """
-        if os.path.isfile("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + " n_theta_s_" + str(n_theta_s) + ".npz"):
+        if os.path.isfile("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz"):
             # print("Loading NFW parameters")
-            file = np.load("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + " n_theta_s_" + str(n_theta_s) + ".npz")
+            file = np.load("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz")
             l_ary = file['l_ary']
             theta_s_ary = file['theta_s_ary']
             MNFWdivM0_integ_ary = file['MNFWdivM0_integ_ary']
@@ -208,19 +208,19 @@ class Profiles:
         else:
             print("Precomputing NFW parameters")
 
-            l_min, l_max = 1, 2000
+            l_min, l_max = 1, 10000
             l_ary = np.logspace(np.log10(l_min), np.log10(l_max), n_l)
 
-            theta_s_min, theta_s_max = 0.001, 5
+            theta_s_min, theta_s_max = 0.0005, 5
             theta_s_ary = np.logspace(np.log10(theta_s_min), np.log10(theta_s_max), n_theta_s)
 
             MNFWdivM0_integ_ary = np.zeros((n_theta_s, n_l))
 
             for itheta_s, theta_s in enumerate(tqdm_notebook(theta_s_ary)):
-                for il, l in enumerate((l_ary)):
+                for il, l in enumerate(tqdm_notebook(l_ary)):
                     MNFWdivM0_integ_ary[itheta_s, il] = self.MNFWdivM0_integ(theta_s, l)
 
-            np.savez("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + " n_theta_s " + str(n_theta_s) + ".npz",
+            np.savez("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz",
                      l_ary=l_ary, theta_s_ary=theta_s_ary, MNFWdivM0_integ_ary=MNFWdivM0_integ_ary)
 
         self.MNFWdivM0_integ_interp = interp2d(np.log10(l_ary), np.log10(theta_s_ary), np.log10(MNFWdivM0_integ_ary),
@@ -240,7 +240,7 @@ class Profiles:
         else:
             print("Precomputing Burkert parameters")
 
-            l_min, l_max = 1, 2000
+            l_min, l_max = 1, 10000
             l_ary = np.logspace(np.log10(l_min), np.log10(l_max), n_l)
 
             theta_b_min, theta_b_max = 0.001, 4
@@ -250,7 +250,7 @@ class Profiles:
             MBurkdivM0_integ_ary = np.zeros((n_theta_b, n_l))
 
             for itheta_b, theta_b in enumerate(tqdm_notebook(theta_b_ary)):
-                for il, l in enumerate((l_ary)):
+                for il, l in enumerate(tqdm_notebook(l_ary)):
                     MBurkdivM0_integ_ary[itheta_b, il] = self.MBurkdivM0_integ(theta_b, l)
 
             np.savez("../arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz",
