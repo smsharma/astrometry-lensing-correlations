@@ -61,7 +61,7 @@ class Sigma():
     def __init__(self, log10_P_interp):
         self.log10_P_interp = log10_P_interp
 
-    def c200_zcoll(self, M200, f=0.02, C=200., n_iter_max=100):
+    def c200_zcoll(self, M200, f=0.02, C=100., n_iter_max=100):
 
         c200_ary = np.zeros(n_iter_max)
         z_coll_ary = np.zeros(n_iter_max)
@@ -103,9 +103,9 @@ class Sigma():
         k = np.exp(lnk)
         return (k ** 3 / (2 * np.pi ** 2)) * 10 ** self.log10_P_interp(np.log10(k * h)) * h ** 3 * self.W(k, R) ** 2
 
-    def sigma_quad(self, R, kmax=10):
+    def sigma_quad(self, R, kmax=20):
         return np.sqrt(
-            quad(lambda lnk: self.log_integrand(lnk, R), np.log(10 ** -7), np.log(10 ** kmax), epsabs=0.0, epsrel=1e-2,
+            quad(lambda lnk: self.log_integrand(lnk, R), np.log(10 ** -6), np.log(10 ** kmax), epsabs=0.0, epsrel=1e-2,
                  limit=100))[0]
 
     def sigma(self, M200):
