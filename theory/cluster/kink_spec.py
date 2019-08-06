@@ -36,11 +36,11 @@ save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster
 
 mfk = MassFunctionKink(gen_file=pk_dir + 'generate_Pk_kink.py')
 
-CLASS_inst = mfk.get_CLASS_kink(k_B=kB, n_B=nB, k_max=1e2)
-CLASS_inst_vanilla = mfk.get_CLASS_kink(k_B=kB, n_B=0.9665, k_max=1e2)
+CLASS_inst = mfk.get_CLASS_kink(k_B=kB, n_B=nB, k_max=5e2)
+CLASS_inst_vanilla = mfk.get_CLASS_kink(k_B=kB, n_B=0.9665, k_max=5e2)
 
 for idnx, inst in enumerate([CLASS_inst_vanilla, CLASS_inst]):
-    k_ary = np.logspace(-6, np.log10(1e2), 10000)
+    k_ary = np.logspace(-6, np.log10(5e2), 10000)
     Pk_ary = np.array([inst.pk_lin(k, 0) for k in k_ary])
 
     log10_k_interp_ary = np.linspace(-6, 20, 10000)
@@ -100,8 +100,8 @@ pspecpop.set_mass_distribution(dndM, M_min=1e1*M_s, M_max=0.01*1.1e12*M_s,
                                M_min_calib=1e8*M_s, M_max_calib=1e10*M_s, N_calib=N_calib_new)
 pspecpop.set_subhalo_properties(c200_custom)
 
-C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=pspecpop.l_cutoff)
-C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=pspecpop.l_cutoff, accel=True)
+C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=1 * pc)
+C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=1 * pc, accel=True)
 
 np.savez(save_dir + '/calib_' + str(kB) + '_' + str(nB) + ".npz",
          C_l_mu_new=C_l_mu_new,
