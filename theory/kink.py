@@ -67,7 +67,7 @@ class Sigma():
         z_coll_ary = np.zeros(n_iter_max)
 
         z_coll_ary[0] = 1.
-        c200_ary[0] = 1000.
+        c200_ary[0] = 2000.
 
         for i in range(1, n_iter_max):
             z_coll_ary[i] = fsolve(lambda z_coll: np.abs(
