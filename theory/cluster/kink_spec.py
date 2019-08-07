@@ -103,7 +103,7 @@ pspecpop.set_subhalo_properties(c200_custom)
 C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=1 * pc)
 C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=1 * pc, accel=True)
 
-np.savez(save_dir + '/calib_' + str(kB) + '_' + str(nB) + ".npz",
+np.savez(save_dir + '/calib_a_' + str(kB) + '_' + str(nB) + ".npz",
          C_l_mu_new=C_l_mu_new,
          C_l_alpha_new=C_l_alpha_new
          )
