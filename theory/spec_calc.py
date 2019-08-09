@@ -227,7 +227,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         self.pref = self.N_calib / norm
 
-        l_los_ary = np.logspace(-3, 5, 200) * pc
+        l_los_ary = np.logspace(-5, 5, 200) * pc
         n_lens_ary = [self.n_lens(l_los_max=l_max) for l_max in l_los_ary]
         self.l_cutoff = (10 ** np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary)))
 
