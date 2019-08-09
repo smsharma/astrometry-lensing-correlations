@@ -25,6 +25,7 @@ parser.add_argument("--nB", action="store", dest="nB", default=1., type=float)
 parser.add_argument("--kB", action="store", dest="kB", default=1, type=float)
 parser.add_argument("--Mmin", action="store", dest="Mmin", default=1e4, type=float)
 parser.add_argument("--save_tag", action="store", dest="save_tag", default="calib", type=str)
+parser.add_argument("--l_cutoff", action="store", dest="l_cutoff", default=-1, type=float)
 
 results=parser.parse_args()
 
@@ -32,6 +33,7 @@ nB = results.nB
 kB = results.kB
 Mmin = results.Mmin
 save_tag = results.save_tag
+l_cutoff = results.l_cutoff
 
 pk_dir = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/'
 save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster_out/'
@@ -53,12 +55,12 @@ for idnx, inst in enumerate([CLASS_inst_vanilla, CLASS_inst]):
     log10_P_interp_ary = (log10_P_interp)(log10_k_interp_ary)
 
     if idnx == 1:
-        file_kinked = pk_dir + 'pk' + str(kB) + '_' + str(nB) + '.dat'
+        file_kinked = pk_dir + 'pk' + str(kB) + '_' + str(nB)  + '_' + str(Mmin) + '.dat'
         np.savetxt(file_kinked,
            np.transpose([log10_k_interp_ary, log10_P_interp_ary]),
            delimiter='\t')
     else:
-        file_base = pk_dir + 'pk' + str(kB) + '_' + str(nB) + '_base.dat'
+        file_base = pk_dir + 'pk' + str(kB) + '_' + str(nB) + '_' + str(Mmin) + '_base.dat'
         np.savetxt(file_base,
            np.transpose([log10_k_interp_ary, log10_P_interp_ary]),
            delimiter='\t')
@@ -69,8 +71,8 @@ cosmo = cosmology.setCosmology('planck18')
 
 M_ary = np.logspace(4, 12, 50)
 
-dndlnM_vanilla_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':file_base})
-dndlnM_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(5), 'path':file_kinked})
+dndlnM_vanilla_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(10), 'path':file_base})
+dndlnM_ary = mass_function.massFunction(M_ary, 0.0, mdef = '200m', model = 'tinker08', q_in='M', q_out = 'dndlnM', ps_args={'model': mfk.randomword(10), 'path':file_kinked})
 
 dndlnM_vanilla_interp = interp1d(np.log10(M_ary * M_s), np.log10(dndlnM_vanilla_ary / M_ary))
 dndlnM_interp = interp1d(np.log10(M_ary * M_s), np.log10(dndlnM_ary / M_ary), fill_value='extrapolate')
@@ -104,8 +106,13 @@ pspecpop.set_mass_distribution(dndM, M_min=Mmin*M_s, M_max=0.01*1.1e12*M_s,
                                M_min_calib=1e8*M_s, M_max_calib=1e10*M_s, N_calib=N_calib_new)
 pspecpop.set_subhalo_properties(c200_custom)
 
-C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=pspecpop.l_cutoff)
-C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=pspecpop.l_cutoff, accel=True)
+if l_cutoff == -1.:
+    l_cutoff = pspecpop.l_cutoff
+else:
+    l_cutoff = l_cutoff * pc
+
+C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=l_cutoff)
+C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=l_cutoff, accel=True)
 
 np.savez(save_dir + '/' + save_tag + '_' + str(kB) + '_' + str(nB) + '_' + str(Mmin) + ".npz",
          C_l_mu_new=C_l_mu_new,
