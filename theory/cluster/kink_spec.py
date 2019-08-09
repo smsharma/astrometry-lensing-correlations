@@ -26,6 +26,7 @@ parser.add_argument("--kB", action="store", dest="kB", default=1, type=float)
 parser.add_argument("--Mmin", action="store", dest="Mmin", default=1e4, type=float)
 parser.add_argument("--save_tag", action="store", dest="save_tag", default="calib", type=str)
 parser.add_argument("--l_cutoff", action="store", dest="l_cutoff", default=-1, type=float)
+parser.add_argument("--l_max", action="store", dest="l_max", default=10000, type=int)
 
 results=parser.parse_args()
 
@@ -34,6 +35,7 @@ kB = results.kB
 Mmin = results.Mmin
 save_tag = results.save_tag
 l_cutoff = results.l_cutoff
+l_max = results.l_max
 
 pk_dir = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/'
 save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster_out/'
@@ -99,7 +101,7 @@ def dndM(M):
 def c200_custom(M):
     return 10 ** c200_interp(np.log10(M))
 
-pspecpop = PowerSpectraPopulations(l_max=10000)
+pspecpop = PowerSpectraPopulations(l_max=l_max)
 
 pspecpop.set_radial_distribution(pspecpop.r2rho_V_NFW, R_min=1e-2*kpc, R_max=260*kpc)
 pspecpop.set_mass_distribution(dndM, M_min=Mmin*M_s, M_max=0.01*1.1e12*M_s,
