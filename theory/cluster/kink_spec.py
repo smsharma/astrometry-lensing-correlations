@@ -113,10 +113,21 @@ if l_cutoff == -1.:
 else:
     l_cutoff = l_cutoff * pc
 
-C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=l_cutoff)
-C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=l_cutoff, accel=True)
+pspecpop.get_C_l_total_ary(l_los_min=l_cutoff)
+C_l_mu = pspecpop.C_l_calc_ary
+
+pspecpop.get_C_l_total_ary(l_los_min=l_cutoff, accel=True)
+C_l_alpha = pspecpop.C_l_calc_ary
+
+l_ary = pspecpop.l_ary_calc
+
 
 np.savez(save_dir + '/' + save_tag + '_' + str(kB) + '_' + str(nB) + '_' + str(Mmin) + ".npz",
-         C_l_mu_new=C_l_mu_new,
-         C_l_alpha_new=C_l_alpha_new
+         C_l_mu=C_l_mu,
+         C_l_alpha=C_l_alpha,
+         l_ary=l_ary,
+         dndlnM_ary=dndlnM_ary,
+         M_ary=M_ary,
+         c200_ary=c200_ary,
+         M_ary_conc=M_ary_conc / M_s
          )
