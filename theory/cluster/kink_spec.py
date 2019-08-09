@@ -23,11 +23,15 @@ from colossus.lss import mass_function
 parser = argparse.ArgumentParser()
 parser.add_argument("--nB", action="store", dest="nB", default=1., type=float)
 parser.add_argument("--kB", action="store", dest="kB", default=1, type=float)
+parser.add_argument("--Mmin", action="store", dest="Mmin", default=1e4, type=float)
+parser.add_argument("--save_tag", action="store", dest="save_tag", default="calib", type=str)
 
 results=parser.parse_args()
 
 nB = results.nB
 kB = results.kB
+Mmin = results.Mmin
+save_tag = results.save_tag
 
 pk_dir = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/'
 save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster_out/'
@@ -96,14 +100,14 @@ def c200_custom(M):
 pspecpop = PowerSpectraPopulations(l_max=10000)
 
 pspecpop.set_radial_distribution(pspecpop.r2rho_V_NFW, R_min=1e-2*kpc, R_max=260*kpc)
-pspecpop.set_mass_distribution(dndM, M_min=1e1*M_s, M_max=0.01*1.1e12*M_s,
+pspecpop.set_mass_distribution(dndM, M_min=Mmin*M_s, M_max=0.01*1.1e12*M_s,
                                M_min_calib=1e8*M_s, M_max_calib=1e10*M_s, N_calib=N_calib_new)
 pspecpop.set_subhalo_properties(c200_custom)
 
-C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=1 * pc)
-C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=1 * pc, accel=True)
+C_l_mu_new = pspecpop.get_C_l_total_ary(l_los_min=pspecpop.l_cutoff)
+C_l_alpha_new = pspecpop.get_C_l_total_ary(l_los_min=pspecpop.l_cutoff, accel=True)
 
-np.savez(save_dir + '/calib_a_' + str(kB) + '_' + str(nB) + ".npz",
+np.savez(save_dir + '/' + save_tag + '_' + str(kB) + '_' + str(nB) + '_' + str(Mmin) + ".npz",
          C_l_mu_new=C_l_mu_new,
          C_l_alpha_new=C_l_alpha_new
          )
