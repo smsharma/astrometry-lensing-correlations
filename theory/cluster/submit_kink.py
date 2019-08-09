@@ -25,21 +25,21 @@ cd /group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/
 
 '''
 
-n_B_ary = [0.9665] + list(np.linspace(2.25, 3, 11))
-k_B_ary = np.logspace(np.log10(5), np.log10(50), 11)
-M_min_ary = [1e-6, 1e1, 1e4]
+# n_B_ary = [0.9665] + list(np.linspace(2.25, 3, 11))
+# k_B_ary = np.logspace(np.log10(5), np.log10(50), 11)
+# M_min_ary = [1e-6, 1e1, 1e4]
 
-for n_B in n_B_ary:
-    for k_B in k_B_ary:
-        for M_min in M_min_ary:
-            batchn = batch  + "\n"
-            batchn += "python kink_spec.py --kB " + str(k_B) + " --nB " + str(n_B) + " --Mmin " + str(M_min) + ' --save_tag narrow'
-            fname = "batch/" + str(k_B) + "_" + str(n_B) + "_" + str(M_min) + ".batch"
-            f=open(fname, "w")
-            f.write(batchn)
-            f.close()
-            os.system("chmod +x " + fname);
-            os.system("sbatch " + fname);
+# for n_B in n_B_ary:
+#     for k_B in k_B_ary:
+#         for M_min in M_min_ary:
+#             batchn = batch  + "\n"
+#             batchn += "python kink_spec.py --kB " + str(k_B) + " --nB " + str(n_B) + " --Mmin " + str(M_min) + ' --save_tag narrow'
+#             fname = "batch/" + str(k_B) + "_" + str(n_B) + "_" + str(M_min) + ".batch"
+#             f=open(fname, "w")
+#             f.write(batchn)
+#             f.close()
+#             os.system("chmod +x " + fname);
+#             os.system("sbatch " + fname);
 
 n_B_ary = [0.9665] + list(np.linspace(1, 3, 11))
 k_B_ary = np.logspace(np.log10(5), np.log10(50), 11)
@@ -49,7 +49,7 @@ for n_B in n_B_ary:
     for k_B in k_B_ary:
         for M_min in M_min_ary:
             batchn = batch  + "\n"
-            batchn += "python kink_spec.py --kB " + str(k_B) + " --nB " + str(n_B) + " --Mmin " + str(M_min) + ' --save_tag narrow'
+            batchn += "python kink_spec.py --kB " + str(k_B) + " --nB " + str(n_B) + " --Mmin " + str(M_min) + ' --save_tag wide'
             fname = "batch/" + str(k_B) + "_" + str(n_B) + "_" + str(M_min) + ".batch"
             f=open(fname, "w")
             f.write(batchn)
