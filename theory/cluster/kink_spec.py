@@ -12,6 +12,7 @@ from scipy.optimize import fsolve
 from theory.spec_calc import PowerSpectra, PowerSpectraPopulations
 from theory.kink import MassFunctionKink, Sigma
 from theory.units import *
+from theory.astrometry_forecast import Parameter, AstrometryObservation, FisherForecast
 
 sys.path.append('/group/hepheno/smsharma/heptools/colossus/')
 
@@ -122,6 +123,45 @@ C_l_alpha = pspecpop.C_l_calc_ary
 l_ary = pspecpop.l_ary_calc
 
 
+def get_sens(Cl_ary, Cl_ary_accel, f_sky=0.05, sigma_mu=10000., N_q_mu=1e8, sigma_alpha=1, N_q_alpha=1e12,
+                        l_min_mu=10, l_max_mu=2000, l_min_alpha=50, l_max_alpha=10000, l_max=10000):
+    fDM_base = 1
+    dfDM_base = 0.1
+
+    Cl_ary_fid = np.array(Cl_ary) * fDM_base
+    Cl_ary_accel_fid = np.array(Cl_ary_accel) * fDM_base
+
+    p = np.array(Cl_ary) * (fDM_base + dfDM_base)
+    m = np.array(Cl_ary) * (fDM_base - dfDM_base)
+
+    p_a = np.array(Cl_ary_accel) * (fDM_base + dfDM_base)
+    m_a = np.array(Cl_ary_accel) * (fDM_base - dfDM_base)
+
+    fDM = Parameter('fDM', fDM_base, dfDM_base, None, True, p, m,
+                    p_a, m_a, l_min=1, l_max=l_max)
+
+    if sigma_mu == -1: Cl_ary_fid = None
+    if sigma_alpha == -1: Cl_ary_accel_fid = None
+
+    parameters = [Cl_ary_fid, Cl_ary_accel_fid, 1, l_max, fDM]
+
+    observation = AstrometryObservation(fsky=f_sky, sigma_mu=sigma_mu, sigma_alpha=sigma_alpha,
+                                        N_q_mu=N_q_mu, N_q_alpha=N_q_alpha,
+                                        l_min_mu=l_min_mu, l_max_mu=l_max_mu, l_min_alpha=l_min_alpha,
+                                        l_max_alpha=l_max_alpha)
+
+    fshr = FisherForecast(parameters, observation)
+    lim = 1.64 * np.sqrt(np.linalg.inv(fshr.fshr_cls + fshr.fshr_prior)[0, 0])
+    return lim, fDM_base / fshr.pars_vary[0].sigma
+
+l_ary_arange = np.arange(np.min(l_ary), np.max(l_ary))
+C_l_mu = (10 ** np.interp(np.log10(l_ary_arange), np.log10(l_ary), np.log10(C_l_mu)))
+C_l_alpha = (10 ** np.interp(np.log10(l_ary_arange), np.log10(l_ary), np.log10(C_l_alpha)))
+
+lim_ska, sig_ska = get_sens(C_l_mu, C_l_alpha, f_sky=1, sigma_mu=1, N_q_mu=1e8, sigma_alpha=-1, l_max=l_max, l_max_alpha=3, l_max_mu=5000)
+lim_wfirst, sig_wfirst = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=0.1, l_max=l_max, l_max_alpha=500000, l_max_mu=3)
+lim_gaia, sig_gaia = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=10, l_max=l_max, l_max_alpha=500000, l_max_mu=3)
+
 np.savez(save_dir + '/' + save_tag + '_' + str(kB) + '_' + str(nB) + '_' + str(Mmin) + ".npz",
          C_l_mu=C_l_mu,
          C_l_alpha=C_l_alpha,
@@ -129,5 +169,8 @@ np.savez(save_dir + '/' + save_tag + '_' + str(kB) + '_' + str(nB) + '_' + str(M
          dndlnM_ary=dndlnM_ary,
          M_ary=M_ary,
          c200_ary=c200_ary,
-         M_ary_conc=M_ary_conc / M_s
+         M_ary_conc=M_ary_conc / M_s,
+         sig_ska=np.array([lim_ska, sig_ska]),
+         sig_wfirst=np.array([lim_wfirst, sig_wfirst]),
+         sig_gaia=np.array([lim_gaia, sig_gaia])
          )
