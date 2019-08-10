@@ -35,7 +35,7 @@ for n_B in n_B_ary:
         for M_min in M_min_ary:
             for l_cutoff in l_cutoff_ary:
                 batchn = batch  + "\n"
-                batchn += "python kink_spec.py --kB " + str(k_B) + " --nB " + str(n_B) + " --Mmin " + str(M_min) + " --l_cutoff " + str(l_cutoff) + ' --save_tag calib_' + str(l_cutoff) + " --l_max 500000"
+                batchn += "python kink_spec.py --kB " + str(k_B) + " --nB " + str(n_B) + " --Mmin " + str(M_min) + " --l_cutoff " + str(l_cutoff) + " --save_tag calib --l_max 500000"
                 fname = "batch/" + str(k_B) + "_" + str(n_B) + "_" + str(M_min) + ".batch"
                 f=open(fname, "w")
                 f.write(batchn)
