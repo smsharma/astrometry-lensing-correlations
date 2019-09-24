@@ -1,7 +1,7 @@
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import Galactic, Galactocentric, CartesianDifferential
-# from skmonaco import mcquad
+from scipy.integrate import quad
 
 from simulation.pdf_sampler import PDFSampler
 from theory.units import *
@@ -61,12 +61,10 @@ class SubhaloSample(Profiles):
             M = np.exp(logM) * M_s
             return M * self.rho_M(M)
 
-        norm1, _ = mcquad(integ, npoints=1e6, xl=[np.log(self.M_min / M_s)], xu=[np.log(self.M_max / M_s)], nprocs=5)
+        norm1, _ = quad(lambda logM: integ(logM), np.log(self.M_min / M_s), xu=np.log(self.M_max / M_s))[0]
+        norm2, _ = quad(lambda logM: integ(logM), np.log(self.M_min_calib / M_s), np.log(self.M_max_calib / M_s))[0]
 
-        norm2, _ = mcquad(integ, npoints=1e6, xl=[np.log(self.M_min_calib / M_s)], xu=[np.log(self.M_max_calib / M_s)],
-                          nprocs=5)
-
-        self.N_halos = np.random.poisson(self.N_calib * norm1 / norm2)[0]
+        self.N_halos = np.random.poisson(self.N_calib * norm1 / norm2)
 
         print("Simulating", str(self.N_halos), "subhalos between", str(np.log10(self.M_min / M_s)), "and", str(np.log10(self.M_max / M_s)))
 
