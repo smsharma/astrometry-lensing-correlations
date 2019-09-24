@@ -61,7 +61,7 @@ class SubhaloSample(Profiles):
             M = np.exp(logM) * M_s
             return M * self.rho_M(M)
 
-        norm1, _ = quad(lambda logM: integ(logM), np.log(self.M_min / M_s), xu=np.log(self.M_max / M_s))[0]
+        norm1, _ = quad(lambda logM: integ(logM), np.log(self.M_min / M_s), np.log(self.M_max / M_s))[0]
         norm2, _ = quad(lambda logM: integ(logM), np.log(self.M_min_calib / M_s), np.log(self.M_max_calib / M_s))[0]
 
         self.N_halos = np.random.poisson(self.N_calib * norm1 / norm2)
