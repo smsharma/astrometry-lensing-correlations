@@ -133,9 +133,9 @@ class SubhaloSample(Profiles):
             v_E = np.zeros(3)
 
         # Rotate about x-axis to ecliptic coordinates. CHECK IF THIS IS RIGHT.
-        v_sun_E_ecliptic = CartesianDifferential(np.array([0, np.linalg.norm(v_sun + v_E), 0])*u.km/u.s)
-        # v_sun_E_ecliptic = CartesianDifferential((v_sun + v_E)*u.km/u.s)
-        # v_sun_E_ecliptic = CartesianDifferential(np.zeros(3) * u.km / u.s)
+        # v_sun_E_ecliptic = CartesianDifferential(np.array([0, np.linalg.norm(v_sun + v_E), 0]) * u.km/u.s)
+        # v_sun_E_ecliptic = CartesianDifferential((v_sun + v_E) * u.km/u.s)
+        v_sun_E_ecliptic = CartesianDifferential(np.zeros(3) * u.km / u.s)
 
         self.coords_gc = Galactocentric(
             x=coords_xyz[0] * self.r_sample / kpc * u.kpc,  # Scale vectors by sampled
