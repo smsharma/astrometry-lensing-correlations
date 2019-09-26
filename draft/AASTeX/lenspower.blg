@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99d (TeX Live 2016)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: lenspower.aux
+The style file: aasjournal-mod.bst
+Database file #1: lenspower.bib
+Warning--I didn't find a database entry for ""
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Warning--empty journal in Aghanim:2018eyx
+Warning--empty year in Mathematica; set to ????
+You've used 101 entries,
+            3166 wiz_defined-function locations,
+            1351 strings with 30761 characters,
+and the built_in function-call counts, 51332 in all, are:
+= -- 4242
+> -- 3920
+< -- 29
++ -- 1313
+- -- 1427
+* -- 4896
+:= -- 9200
+add.period$ -- 102
+call.type$ -- 101
+change.case$ -- 594
+chr.to.int$ -- 98
+cite$ -- 103
+duplicate$ -- 1801
+empty$ -- 3106
+format.name$ -- 1546
+if$ -- 10476
+int.to.chr$ -- 4
+int.to.str$ -- 0
+missing$ -- 97
+newline$ -- 312
+num.names$ -- 405
+pop$ -- 678
+preamble$ -- 1
+purify$ -- 594
+quote$ -- 0
+skip$ -- 1563
+stack$ -- 0
+substring$ -- 2243
+swap$ -- 14
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 906
+warning$ -- 2
+while$ -- 384
+width$ -- 0
+write$ -- 1175
+(There were 3 warnings)
