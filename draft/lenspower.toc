@@ -24,16 +24,16 @@
 \contentsline {section}{\numberline {V}Signal discriminants and further prospects}{15}{section*.22}
 \contentsline {subsection}{\numberline {A}Toroidal modes as a control region}{15}{section*.23}
 \contentsline {subsection}{\numberline {B}Directional asymmetry}{16}{section*.24}
-\contentsline {section}{\numberline {VI}Conclusions}{16}{section*.25}
-\contentsline {section}{\numberline {}Acknowledgements}{18}{section*.26}
+\contentsline {section}{\numberline {VI}Power spectrum decomposition of \emph {Gaia}\xspace DR2 quasars}{16}{section*.25}
+\contentsline {section}{\numberline {VII}Conclusions}{16}{section*.26}
+\contentsline {section}{\numberline {}Acknowledgements}{18}{section*.27}
 \appendix 
-\contentsline {section}{\numberline {A}Derivation of equations}{18}{section*.27}
-\contentsline {subsection}{\numberline {1}Velocity and acceleration power spectra}{18}{section*.28}
-\contentsline {subsection}{\numberline {2}Flat-sky velocity power spectrum}{18}{section*.29}
-\contentsline {subsection}{\numberline {3}Power spectrum for ultralight scalar dark matter perturbations}{18}{section*.30}
-\contentsline {section}{\numberline {B}Fisher forecasting formalism}{18}{section*.31}
-\contentsline {section}{\numberline {C}Constructing a velocity power spectrum estimator}{19}{section*.32}
-\contentsline {subsection}{\numberline {1}Setup}{19}{section*.33}
-\contentsline {subsection}{\numberline {2}Quadratic likelihood estimator}{20}{section*.34}
-\contentsline {subsection}{\numberline {3}Spectral binning}{21}{section*.35}
+\contentsline {section}{\numberline {A}Derivation of equations}{18}{section*.28}
+\contentsline {subsection}{\numberline {1}Velocity and acceleration power spectra}{18}{section*.29}
+\contentsline {subsection}{\numberline {2}Flat-sky velocity power spectrum}{18}{section*.30}
+\contentsline {subsection}{\numberline {3}Power spectrum for ultralight scalar dark matter perturbations}{18}{section*.31}
+\contentsline {section}{\numberline {B}Fisher forecasting formalism}{18}{section*.32}
+\contentsline {section}{\numberline {C}Constructing a velocity power spectrum estimator}{19}{section*.33}
+\contentsline {subsection}{\numberline {1}Setup}{19}{section*.34}
+\contentsline {subsection}{\numberline {2}Quadratic likelihood estimator}{20}{section*.35}
 \contentsline {section}{\numberline {}References}{21}{section*.36}
