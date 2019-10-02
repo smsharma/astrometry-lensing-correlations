@@ -122,7 +122,7 @@ class Profiles:
         """
         Helper function for NFW deflection, from astro-ph/0102341
         TODO: returning warnings for invalid value in sqrt for some reason
-        JB: That's because all of the arguments of np.where are evaluated, including the ones with ngative arguments to
+        JB: That's because all of the arguments of np.where are evaluated, including the ones with negative arguments to
         sqrt, but only the good ones are then returned. So we can just suppress these warnings
         """
         with np.errstate(divide="ignore", invalid="ignore"):

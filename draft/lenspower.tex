@@ -6,6 +6,7 @@
 \usepackage[dvipsnames]{xcolor}
 \usepackage{hyperref}
 \usepackage{my-aas_macros}
+\usepackage{xspace}
 
 \newcommand\myshade{85}
 \colorlet{mylinkcolor}{violet}
@@ -19,7 +20,7 @@ urlcolor=myurlcolor!\myshade!black,
 ,linktocpage=true
 ,pdfproducer=medialab}
 
-\newcommand{\Gaia}{\emph{Gaia}}
+\newcommand{\Gaia}{\emph{Gaia}\xspace}
 
 \newcommand{\vect}[1]{\boldsymbol{\mathbf{#1}}}
 \newcommand{\dd}{\mathrm{d}}
@@ -693,9 +694,9 @@ Explicitly, we can see this directional asymmetry in the expected power by compu
 \end{align}
 As stated above, the directional asymmetry in the rate of change in impact parameter stems from the asymmetric $f_\oplus(\vect{v}_l)$ in Eq.~\ref{eq:fvoplus}, with higher expected proper components in the Galactic longitude direction: $\langle v_{l,\varphi}^2 \sin^2 \theta_l \rangle > \langle v_{l,\theta}^2 \rangle $.\footnote{Note that the $\int \dd \Omega$ integral in Eq.~\ref{eq:mlasymmetry} at high $\ell$ is dominated by the region $\vect{\theta} \simeq \vect{\theta}_l$, due to the higher gradients in $\psi(\vect{\beta})$ there.} At high $|m|/\ell$, we also have that $\langle |\Psi_{\ell m,\varphi}|^2 \rangle > \langle |\Psi_{\ell m,\theta}|^2 \rangle$ over the celestial sphere, with the opposite inequality for low values of $|m|/\ell$. At low $|m|/\ell$, the dominant contributions arise from the second line in Eq.~\ref{eq:mlasymmetry}, while at high $|m|/\ell$, they arise from the third line. We therefore deduce that for the astrometric lensing signal, $\big \langle \big|\mu_{\ell m}^{(1)}\big|^2\big\rangle$ is an increasing function of $|m|$ at fixed $\ell$, which is calculable from the 6D phase space distribution of the DM subhalos. This $|m|$ asymmetry is further exacerbated by the fact that the DM lens distribution $n(\vect{\theta}_l,D_l)$ is peaked at $\theta_l \approx \pi / 2$ in the latitude direction, where the high-$|m|/\ell$ modes have more support than the low-$|m|/\ell$ modes.
 
-Asymmetries in $|m|$ may also be caused by variations in exposure and noise across the celestial sphere. For optical astrometric surveys of quasars for example, there is a lower background source number density and higher astrometric noise per source near the Galactic equator, causing $\vect{\mu}$ to be more poorly measured there. Because of the support of the VSH functions, this would lead to somewhat similar asymmetry in $|m|/\ell$ for the noise, in both $\mu_{\ell,m}^{(1)}$ and $\mu_{\ell,m}^{(2)}$ components. Indeed, we observe this asymmetry in the quasar sample of the \textit{Gaia} DR2 data in Sec.~\ref{sec:Gaiatest}. Nevertheless, because the lensing signal contributes only to $\mu_{\ell,m}^{(1)}$, one generally expects a \emph{difference} in $|m|$ asymmetry for the poloidal and toroidal mode power. Any excess power in the poloidal modes relative to the toroidal modes---as expected from a lensing signal---can then be tested to see if it conforms to the expected asymmetry implied by Eq.~\ref{eq:mlasymmetry}. We expect a similar but quantitatively even higher $|m|/\ell$ asymmetry in the poloidal mode power of the lens-induced proper accelerations, due to the higher number (4 instead of 2) of powers of $\vect{v}_l$ involved.
+Asymmetries in $|m|$ may also be caused by variations in exposure and noise across the celestial sphere. For optical astrometric surveys of quasars for example, there is a lower background source number density and higher astrometric noise per source near the Galactic equator, causing $\vect{\mu}$ to be more poorly measured there. Because of the support of the VSH functions, this would lead to somewhat similar asymmetry in $|m|/\ell$ for the noise, in both $\mu_{\ell,m}^{(1)}$ and $\mu_{\ell,m}^{(2)}$ components. Indeed, we observe this asymmetry in the quasar sample of the \textit{Gaia} DR2 data in Sec.~\ref{sec:gaia-quasars}. Nevertheless, because the lensing signal contributes only to $\mu_{\ell,m}^{(1)}$, one generally expects a \emph{difference} in $|m|$ asymmetry for the poloidal and toroidal mode power. Any excess power in the poloidal modes relative to the toroidal modes---as expected from a lensing signal---can then be tested to see if it conforms to the expected asymmetry implied by Eq.~\ref{eq:mlasymmetry}. We expect a similar but quantitatively even higher $|m|/\ell$ asymmetry in the poloidal mode power of the lens-induced proper accelerations, due to the higher number (4 instead of 2) of powers of $\vect{v}_l$ involved.
 
-\edit
+% \edit
 
 %For an isotropically distributed and homogeneous lens population, the signal $\langle |\mu_{\ell m}^{(1)}|^2 \rangle$ will therefore be an \emph{increasing} function of $|m|/\ell$ at fixed $\ell$.
 
@@ -713,6 +714,9 @@ This $\mathcal{O}(1)$ azimuthal asymmetry can be used as a handle to discriminat
 
 % \subsection{Further Prospects}
 % \label{sec:prospects}
+
+\section{Power spectrum decomposition of \Gaia DR2 quasars}
+\label{sec:gaia-quasars}
 
 \section{Conclusions}
 \label{sec:conclusions}
@@ -939,26 +943,26 @@ F_{\ell m \ell' m'} &=  \big\lbrace c^{\ell' m'}_1 A^{\ell m}_{\ell'-1,m'} + c^{
 
 First compute $A^{\ell m}_{\ell' m'}$ and $B^{\ell m}_{\ell' m'}$ matrices, and then construct Fisher matrix.
 
-\subsection{Spectral binning}
-The maximum likelihood estimator requires the inverse of the Fisher matrix, which may not exist if the data are too sparse and $\ell_\text{max}$ is too large. Since we are not interested in the power in any one mode, but rather in the gross behavior, we would collect the power spectrum into logarithmic bins in $\ell$, and a high-$|m|$ bin, and a low-$|m|$ bin anyway.
+% \subsection{Spectral binning}
+% The maximum likelihood estimator requires the inverse of the Fisher matrix, which may not exist if the data are too sparse and $\ell_\text{max}$ is too large. Since we are not interested in the power in any one mode, but rather in the gross behavior, we would collect the power spectrum into logarithmic bins in $\ell$, and a high-$|m|$ bin, and a low-$|m|$ bin anyway.
 
-Non-overlapping spectral bins $B$. Binning by $m$ could be e.g.~$B+ = \lbrace m : |m|\le\text{floor}(\ell/2)\rbrace$ and $B- = \lbrace m : \text{floor}(\ell/2) < |m|\le \ell \rbrace$.  Compute ``band averages'':
-\begin{align}
-S^{(1)}_B = \sum_{\ell m} W_{B \ell m} S^{(1)}_{\ell m},
-\end{align}
-with weight matrices $W_{B \ell m}$ that have many fewer rows than columns and which satisfy $\sum_{\ell m} W_{B \ell m} = 1$. We suppose that the power spectrum can be adequately approximated by the coarse-grained $S_l^{(1)\dagger}$:
-\begin{align}
-S^{(1)\dagger}_{\ell m} = \sum_B W_{\ell m B}^\dagger S_B^{(1)}
-\end{align}
-where $W_{\ell m B}^\dagger$ is the pseudo-inverse
-\begin{align}
-W_{\ell m B}^\dagger = \sum_{B'} W_{B \ell m} \left( \sum_{\ell' m'} W_{B' \ell' m'} W_{B \ell' m'} \right)^{-1}
-\end{align}
+% Non-overlapping spectral bins $B$. Binning by $m$ could be e.g.~$B+ = \lbrace m : |m|\le\text{floor}(\ell/2)\rbrace$ and $B- = \lbrace m : \text{floor}(\ell/2) < |m|\le \ell \rbrace$.  Compute ``band averages'':
+% \begin{align}
+% S^{(1)}_B = \sum_{\ell m} W_{B \ell m} S^{(1)}_{\ell m},
+% \end{align}
+% with weight matrices $W_{B \ell m}$ that have many fewer rows than columns and which satisfy $\sum_{\ell m} W_{B \ell m} = 1$. We suppose that the power spectrum can be adequately approximated by the coarse-grained $S_l^{(1)\dagger}$:
+% \begin{align}
+% S^{(1)\dagger}_{\ell m} = \sum_B W_{\ell m B}^\dagger S_B^{(1)}
+% \end{align}
+% where $W_{\ell m B}^\dagger$ is the pseudo-inverse
+% \begin{align}
+% W_{\ell m B}^\dagger = \sum_{B'} W_{B \ell m} \left( \sum_{\ell' m'} W_{B' \ell' m'} W_{B \ell' m'} \right)^{-1}
+% \end{align}
 
-All formulas for $S_B$, $Z_{B B'}$, and $F_{BB'}$ are the same as in the previous section with the replacements $\ell m \leftrightarrow B$ and using the weighted response matrices:
-\begin{align}
-P^{(1)B}_{i\alpha j \beta} = \sum_{\ell m} P^{(1)\ell m}_{i\alpha j \beta} W^\dagger_{\ell m B}.
-\end{align}
+% All formulas for $S_B$, $Z_{B B'}$, and $F_{BB'}$ are the same as in the previous section with the replacements $\ell m \leftrightarrow B$ and using the weighted response matrices:
+% \begin{align}
+% P^{(1)B}_{i\alpha j \beta} = \sum_{\ell m} P^{(1)\ell m}_{i\alpha j \beta} W^\dagger_{\ell m B}.
+% \end{align}
 
 % \bibliographystyle{aasjournal}
 \bibliographystyle{apsrev4-1}
