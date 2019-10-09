@@ -73,7 +73,7 @@ class Profiles:
         x = b / r_s
         M = 4 * np.pi * rho_s * r_s ** 3 * (np.log(x / 2.) + self.F(x))
         dMdb = 4 * np.pi * rho_s * r_s ** 2 * ((1 / x) + self.dFdx(x))
-        d2Mdb2 = 4 * np.pi * r_s ** 2 * rho_s * (-(1 / (x ** 2 * r_s)) + self.d2Fdx2(x) / r_s)
+        d2Mdb2 = 4 * np.pi * r_s * rho_s * (-1 / x ** 2 + self.d2Fdx2(x))
         return M, dMdb, d2Mdb2
 
     def MdMdb_Gauss(self, b, R0, M0):
