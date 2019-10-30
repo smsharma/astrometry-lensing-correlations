@@ -16,13 +16,16 @@ class Profiles:
         :param precompute: List of profiles to precompute arrays for to speed up computation ['Burk', 'NFW']
     """
 
-    def __init__(self):
+    def __init__(self, data_dir='/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/data'):
         self.c200_model = self.c200_SCP  # Set a default concentration model to start
 
         # Set default function to numpy rather than mpmath, then switch where necessary
         self.sqrt = np.sqrt
         self.atan = np.arctan
         self.atanh = np.arctanh
+
+        # Set data director
+        self.data_dir = data_dir
 
     ##################################################
     # Enclosed mass functions
@@ -198,9 +201,9 @@ class Profiles:
     def precompute_MNFWdivM0(self, n_l=100, n_theta_s=50):
         """ Precompute enclosed mass integral for NFW profile
         """
-        if os.path.isfile("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz"):
+        if os.path.isfile(self.data_dir + "/arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz"):
             # print("Loading NFW parameters")
-            file = np.load("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz")
+            file = np.load(self.data_dir + "/arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz")
             l_ary = file['l_ary']
             theta_s_ary = file['theta_s_ary']
             MNFWdivM0_integ_ary = file['MNFWdivM0_integ_ary']
@@ -220,7 +223,7 @@ class Profiles:
                 for il, l in enumerate(tqdm_notebook(l_ary)):
                     MNFWdivM0_integ_ary[itheta_s, il] = self.MNFWdivM0_integ(theta_s, l)
 
-            np.savez("../arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz",
+            np.savez(self.data_dir + "/arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz",
                      l_ary=l_ary, theta_s_ary=theta_s_ary, MNFWdivM0_integ_ary=MNFWdivM0_integ_ary)
 
         self.MNFWdivM0_integ_interp = interp2d(np.log10(l_ary), np.log10(theta_s_ary), np.log10(MNFWdivM0_integ_ary),
@@ -230,9 +233,9 @@ class Profiles:
     def precompute_MBurkdivM0(self, n_l=20, n_theta_b=20):
         """ Precompute enclosed mass integral for Burkert profile
         """
-        if os.path.isfile("../arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz"):
+        if os.path.isfile(self.data_dir + "/arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz"):
             # print("MdMdb_NFWg Burkert parameters")
-            file = np.load("../arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz")
+            file = np.load(self.data_dir + "/arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz")
             l_ary = file['l_ary']
             theta_b_ary = file['theta_b_ary']
             MBurkdivM0_integ_ary = file['MBurkdivM0_integ_ary']
@@ -253,7 +256,7 @@ class Profiles:
                 for il, l in enumerate(tqdm_notebook(l_ary)):
                     MBurkdivM0_integ_ary[itheta_b, il] = self.MBurkdivM0_integ(theta_b, l)
 
-            np.savez("../arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz",
+            np.savez(self.data_dir + "/arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz",
                      l_ary=l_ary, theta_b_ary=theta_b_ary, MBurkdivM0_integ_ary=MBurkdivM0_integ_ary)
 
         self.MBurkdivM0_integ_interp = interp2d(np.log10(l_ary), np.log10(theta_b_ary), np.log10(MBurkdivM0_integ_ary),
