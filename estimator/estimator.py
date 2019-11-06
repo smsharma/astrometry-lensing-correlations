@@ -7,7 +7,7 @@ from tqdm import *
 from mpmath import spherharm
 from itertools import groupby
 from operator import itemgetter
-from libsharp import normalized_associated_legendre_table
+# from libsharp import normalized_associated_legendre_table
 from healpy.sphtfunc import map2alm
 from healpy.sphtfunc import Alm
 

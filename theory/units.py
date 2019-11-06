@@ -40,6 +40,7 @@ rho_m = 1.2201511280342523e-23
 delta_c = 1.686
 Rsun = 8.*kpc
 R200_MW = 200.*kpc
+M_MW = 1.1e12 * M_s
 
 # To get velocity of Earth
 vE0 = 29.79
