@@ -9,7 +9,7 @@ from theory.profiles import Profiles
 
 
 class SubhaloSample(Profiles):
-    def __init__(self, use_v_E=False, t=150., sh_profile='NFW'):
+    def __init__(self, use_v_E=False, t=150., sh_profile='NFW', f_sub=None, R0=None):
         """ Class for generating a Galactic subhalo sample
         Args:
             t: time of year in days at which to use Earth velocity 
@@ -22,6 +22,8 @@ class SubhaloSample(Profiles):
         self.use_v_E = use_v_E
         self.t = t
         self.sh_profile = sh_profile
+        self.f_sub = f_sub
+        self.R0 = R0
 
     def get_sh_sample(self):
         """ Generate sample of subhalos
@@ -40,8 +42,7 @@ class SubhaloSample(Profiles):
         self.R_min = R_min
         self.R_max = R_max
 
-    def set_mass_distribution(self, rho_M, M_min, M_max, M_min_calib, M_max_calib, N_calib, **kwargs):
-        # TODO: Stabilize distributions
+    def set_mass_distribution(self, rho_M, M_min, M_max, M_min_calib, M_max_calib, N_calib, f_sub=None, **kwargs):
 
         self.rho_M = rho_M
         self.rho_M_kwargs = kwargs
@@ -54,9 +55,6 @@ class SubhaloSample(Profiles):
 
         self.N_calib = N_calib
 
-        # self.N_halos = self.N_calib*quad(lambda M: self.rho_M(M, **self.rho_M_kwargs), M_min, M_max)[0]/quad(lambda M:self.rho_M(M, **self.rho_M_kwargs), M_min_calib, M_max_calib)[0]
-        # self.N_halos = np.random.poisson(self.N_halos)
-
         def integ(logM):
             M = np.exp(logM) * M_s
             return M * self.rho_M(M)
@@ -65,6 +63,9 @@ class SubhaloSample(Profiles):
         norm2, _ = quad(lambda logM: integ(logM), np.log(self.M_min_calib / M_s), np.log(self.M_max_calib / M_s))
 
         self.N_halos = np.random.poisson(self.N_calib * norm1 / norm2)
+
+        if self.f_sub is not None:
+            self.N_halos =  np.random.poisson(self.f_sub * M_MW / M_min)
 
         print("Simulating", str(self.N_halos), "subhalos between", str(np.log10(self.M_min / M_s)), "and", str(np.log10(self.M_max / M_s)))
 
@@ -94,10 +95,13 @@ class SubhaloSample(Profiles):
     def get_M_sample(self):
         """ Sample subhalo masses
         """
-        M_vals = np.linspace(self.M_min, self.M_max, 10000000)
-        rho_vals = self.rho_M(M_vals)
-        M_dist = PDFSampler(M_vals, rho_vals)
-        self.M_sample = M_dist(self.N_halos)
+        if self.f_sub is None:
+            M_vals = np.linspace(self.M_min, self.M_max, 10000000)
+            rho_vals = self.rho_M(M_vals)
+            M_dist = PDFSampler(M_vals, rho_vals)
+            self.M_sample = M_dist(self.N_halos)
+        else:
+            self.M_sample = self.M_min * np.ones(self.N_halos)
 
     def get_sh_prop(self):
         """ Get subhalos properties
@@ -112,7 +116,11 @@ class SubhaloSample(Profiles):
             self.rho_s_sample = rho_c * (200 / 3.) * self.c200_sample ** 3 / (
                         np.log(1 + self.c200_sample) - self.c200_sample / (1 + self.c200_sample))
         elif self.sh_profile in ["Plummer", "Gaussian"]:
-            self.c200_sample = self.R0_VL(self.M_sample)
+            if self.f_sub is None:
+                self.c200_sample = self.R0_VL(self.M_sample)
+            else:
+                print("Size set to", self.R0 / pc, "pc")
+                self.c200_sample = self.R0 * np.ones(self.N_halos)
         else:
             raise Exception("Unknown profile specification!")
 
