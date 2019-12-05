@@ -5,9 +5,9 @@ import numpy as np
 
 batch='''#!/bin/bash
 #SBATCH -N 1   # node count
-#SBATCH --ntasks-per-node=2
+#SBATCH --ntasks-per-node=1
 #SBATCH -t 48:00:00
-#SBATCH --mem=12GB
+#SBATCH --mem=8GB
 ##SBATCH --mail-type=begin
 ##SBATCH --mail-type=end
 ##SBATCH --mail-user=sm8383@nyu.edu
@@ -26,9 +26,9 @@ cd /group/hepheno/smsharma/Lensing-PowerSpectra/simulation/
 
 '''
 
-for imc in range(5):
+for imc in range(200,500):
     batchn = batch  + "\n"
-    batchn += "python astrometry_compact_sim_interface.py --imc " + str(imc)
+    batchn += "python astrometry_compact_uniform_sim_interface.py --imc " + str(imc)
     fname = "batch/mc_" + str(imc) + ".batch" 
     f=open(fname, "w")
     f.write(batchn)
