@@ -86,12 +86,16 @@ class Sigma():
         return c200_ary[i], z_coll_ary[i]
 
     def W(self, k, R):
+        """ Top-hat window function for smoothing
+        """
         if k * R < 1e-3:
             return 1.
         else:
             return 3 * (k * R) ** -3 * (np.sin(k * R) - (k * R) * np.cos(k * R))
 
     def log_integrand(self, lnk, R):
+        """ Integrand for mass variance sigma
+        """
         k = np.exp(lnk)
         return (k ** 3 / (2 * np.pi ** 2)) * 10 ** self.log10_P_interp(np.log10(k * h)) * h ** 3 * self.W(k, R) ** 2
 

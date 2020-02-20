@@ -5,6 +5,7 @@
 .coverage
 batch
 *.batch
+.idea
 
 # Cython output
 *.pyc
