@@ -10,10 +10,7 @@ from theory.units import *
 
 
 class Profiles:
-    """ Class to calculate expected power spectra from astrometric induced velocities and accelerations
-    TODO: unify / clean up the many functions and methods...
-       
-        :param precompute: List of profiles to precompute arrays for to speed up computation ['Burk', 'NFW']
+    """ A collection of helper functions of halo profiles and their various properties.
     """
 
     def __init__(self, data_dir='/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/data'):
@@ -79,6 +76,7 @@ class Profiles:
         d2Mdb2 = 4 * np.pi * r_s * rho_s * (-1 / x ** 2 + self.d2Fdx2(x))
         return M, dMdb, d2Mdb2
 
+    @classmethod
     def MdMdb_Gauss(self, b, R0, M0):
         """ Mass and derivative within a cylinder of radius `b`
             for a Gaussian lens
@@ -110,16 +108,6 @@ class Profiles:
     ##################################################
     # Helper functions
     ##################################################
-
-    # def F(self, x):
-    #     """ Helper function for NFW deflection, from astro-ph/0102341 eq. (48)
-    #     """
-    #     if x > 1:
-    #         return self.atan(self.sqrt(x ** 2 - 1)) / (self.sqrt(x ** 2 - 1))
-    #     elif x == 1:
-    #         return 1
-    #     elif x < 1:
-    #         return self.atanh(self.sqrt(1 - x ** 2)) / (self.sqrt(1 - x ** 2))
 
     def F(self, x):
         """

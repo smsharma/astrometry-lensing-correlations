@@ -10,6 +10,7 @@ from theory.profiles import Profiles
 class DemoSim:
     def __init__(self, theta_x_lims=[-1.6, 1.6], theta_y_lims=[-0.9, 0.9]):
         """
+        Class to create animations of astrometric weak lensing. For demo and not science!
 
         :param theta_x_lims: x-axis coordinate limits [x_min, x_max] in arcsecs
         :param theta_y_lims: y-axis coordinate limits [y_min, y_max] in arcsecs
@@ -144,12 +145,14 @@ class DemoSim:
         self.lenses["D"] = np.array(D_l)
 
         # Initialize plot
-        fig = plt.figure(figsize=figsize)
+        # fig = plt.figure(figsize=figsize)
+        fig, ax = plt.subplots(figsize=figsize)
         self.ax = plt.axes(xlim=self.theta_x_lims, ylim=self.theta_y_lims)
         self.ax.set_facecolor('black')
 
         if self.show_orig: # Show original star positions
-            self.scatter = self.ax.scatter(self.sources["theta_x"], self.sources["theta_y"], **self.star_orig_kwargs);
+            self.scatter = self.ax.scatter(self.sources["theta_x"], self.sources["theta_y"], **self.star_orig_kwargs)
+
         if self.show_lens: # Show lens positions
             self.x_coords = np.linspace(self.theta_x_lims[0], self.theta_x_lims[1], n_lens_x)
             self.y_coords = np.linspace(self.theta_y_lims[0], self.theta_y_lims[1], n_lens_y)
@@ -200,10 +203,13 @@ class DemoSim:
                                                            mu_s[i_source, 1] * self.arrow_mult,
                                                            **self.arrow_kwargs)))
 
+        # Turn off all ticks
         self.ax.get_xaxis().set_ticks([])
         self.ax.get_yaxis().set_ticks([])
         self.ax.get_xaxis().set_ticklabels([])
         self.ax.get_yaxis().set_ticklabels([])
+
+        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
 
         # Animate if required, otherwise return still image
         if animate:
@@ -285,7 +291,7 @@ class DemoSim:
 
         b_vec = d_lens * np.array(beta_vec)  # Convert angular to physical impact parameter
         b = np.linalg.norm(b_vec)  # Impact parameter
-        M, dMdb, _ = Profiles.MdMdb_Gauss(b, R_0, M_0)
+        M, _, _ = Profiles.MdMdb_Gauss(b, R_0, M_0)
         b_unit_vec = b_vec / b  # Convert angular to physical impact parameter
 
         return 4 * GN * M / b * b_unit_vec * radtoasc  # Convert to as
