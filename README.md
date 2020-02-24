@@ -4,7 +4,7 @@ Code repository for the paper
 **The Power of Halometry**
 by Siddharth Mishra-Sharma, Ken Van Tilburg, and Neal Weiner.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
 [![Dark Matter](https://img.shields.io/badge/Matter-Dark-black.svg)](./)
 [![arXiv](https://img.shields.io/badge/arXiv-2002.xxxxx%20-green.svg)](https://arxiv.org/abs/2002.xxxxx)
 
