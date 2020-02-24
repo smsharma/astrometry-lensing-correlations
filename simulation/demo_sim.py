@@ -164,15 +164,15 @@ class DemoSim:
                                                        self.y_coords - self.lenses["theta_y"][i_lens])
                 r_grid = np.sqrt(self.x_grid ** 2 + self.y_grid ** 2)
                 im += \
-                    Profiles.MdMdb_Gauss(r_grid, self.lenses["R_0"][i_lens] / self.lenses["D"][i_lens] * radtoasc,
-                                         self.lenses["M_0"][i_lens])[0]
+                    np.transpose(Profiles.MdMdb_Gauss(r_grid, self.lenses["R_0"][i_lens] / self.lenses["D"][i_lens] * radtoasc,
+                                         self.lenses["M_0"][i_lens])[0])
 
             self.imshow = self.ax.imshow(im, origin='lower', cmap='Greys',
                                          extent=[*self.theta_x_lims, *self.theta_y_lims])
 
         mu_s = np.zeros((self.n_total, 2))
         theta_s = np.zeros((self.n_total, 2))
-
+    
         # Deflection and proper motion vectors
         for i_lens in range(self.n_lens):
             b_ary = np.transpose([self.sources["theta_x"] - self.lenses["theta_x"][i_lens],
@@ -221,6 +221,7 @@ class DemoSim:
     def update(self, frame_number, dt):
         """ Update animation """
 
+        print(frame_number)
         mu_s = np.zeros((self.n_total, 2))
         theta_s = np.zeros((self.n_total, 2))
 
