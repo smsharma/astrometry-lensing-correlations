@@ -221,7 +221,6 @@ class DemoSim:
     def update(self, frame_number, dt):
         """ Update animation """
 
-        print(frame_number)
         mu_s = np.zeros((self.n_total, 2))
         theta_s = np.zeros((self.n_total, 2))
 
