@@ -10,6 +10,7 @@ by Siddharth Mishra-Sharma, Ken Van Tilburg, and Neal Weiner.
 
 ![Subhalos passing through a field of stars.](plots/correlations.gif)
 
+A _highly_ exaggerated illustration of astrometric lensing.
 
 ## Abstract
 
