@@ -8,7 +8,7 @@ by Siddharth Mishra-Sharma, Ken Van Tilburg, and Neal Weiner.
 [![Dark Matter](https://img.shields.io/badge/Matter-Dark-black.svg)](./)
 [![arXiv](https://img.shields.io/badge/arXiv-2002.xxxxx%20-green.svg)](https://arxiv.org/abs/2002.xxxxx)
 
-![Subhalos passing through a field of stars.](plots/banner_2.gif)
+![Subhalos passing through a field of stars.](plots/correlations.gif)
 
 
 ## Abstract

@@ -167,7 +167,7 @@ class DemoSim:
                     np.transpose(Profiles.MdMdb_Gauss(r_grid, self.lenses["R_0"][i_lens] / self.lenses["D"][i_lens] * radtoasc,
                                          self.lenses["M_0"][i_lens])[0])
 
-            self.imshow = self.ax.imshow(im, origin='lower', cmap='Greys',
+            self.imshow = self.ax.imshow(im, origin='lower', cmap='binary',
                                          extent=[*self.theta_x_lims, *self.theta_y_lims])
 
         mu_s = np.zeros((self.n_total, 2))
