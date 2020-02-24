@@ -69,9 +69,9 @@ def mat_Fisher_amp(weights_map):
 
     return mat_f
 
-nside = 32
-npix = hp.nside2npix(nside)
-lmax = 3*nside - 1
+# nside = 32
+# npix = hp.nside2npix(nside)
+# lmax = 3*nside - 1
 # Ylm_map(lmax,nside)
 # print(Ylm_map(lmax,nside)[546,22,15])
-mat_Fisher(np.ones(npix))
+# mat_Fisher(np.ones(npix))
