@@ -24,13 +24,15 @@ class DemoSim:
                         (self.theta_y_lims[1] - self.theta_y_lims[0])
 
     def animation(self, pos_l, M_l, R_l, v_l, D_l, n_lens_x=200, n_lens_y=200,  # Lens properties
-                  n_dens=20, source_pos="random", custom_source_pos=None, arrow_mult=2000,  # Source properties
-                  figsize=(16, 9), animate=True, dt=10, interval=10, n_frames=100,  # Figure properties
-                  show_lens=True, show_sources=True, show_orig=False, show_vel_arrows=True,  # What to plot/animate
+                  # Source properties
+                  n_dens=20, source_pos="random", custom_source_pos=None, arrow_mult=2000,
+                  # Figure properties
+                  figsize=(16, 9), animate=True, dt=10, interval=10, n_frames=100,
+                  # What to plot/animate
+                  show_lens=True, show_sources=True, show_orig=False, show_vel_arrows=True,
                   star_kwargs={}, star_orig_kwargs={}, arrow_kwargs={}  # Source plotting properties
                   ):
         """
-
         :param pos_l: tuple of lens positions, format [[x_1, y_1], [x_2, y_2]...]
         :param M_l: tuple of lens masses
         :param R_l: tuple of lens sizes (Gaussian lens)
@@ -54,7 +56,7 @@ class DemoSim:
         :param star_kwargs: star plotting options; matplotlib defaults by default
         :param star_orig_kwargs: unperturbed star plotting options; matplotlib defaults by default
         :param arrow_kwargs: arrow plotting options; matplotlib defaults by default
-        :return: animation or figure, depending on whether `animation=True` or `False`
+        :return: animation or figure, depending on whether `animation=True` or `animation=False`
         """
 
         # Set global parameters
@@ -71,7 +73,7 @@ class DemoSim:
         # Get total number of sources in sky region
         self.n_total = np.random.poisson(n_dens * self.roi_area)
 
-        ## Set source positions
+        # Set source positions
 
         # Random positions + custom if specified
         if source_pos == "random":
@@ -99,9 +101,12 @@ class DemoSim:
 
         # Uniform grid of sources
         elif source_pos == "uniform":
-            xy_ratio = (self.theta_y_lims[1] - self.theta_y_lims[0]) / (self.theta_x_lims[1] - self.theta_x_lims[0])
-            x_pos = np.linspace(self.theta_x_lims[0], self.theta_x_lims[1], np.round(np.sqrt(self.n_total / xy_ratio)))
-            y_pos = np.linspace(self.theta_y_lims[0], self.theta_y_lims[1], np.round(np.sqrt(self.n_total * xy_ratio)))
+            xy_ratio = (self.theta_y_lims[1] - self.theta_y_lims[0]) / \
+                (self.theta_x_lims[1] - self.theta_x_lims[0])
+            x_pos = np.linspace(self.theta_x_lims[0], self.theta_x_lims[1], np.round(
+                np.sqrt(self.n_total / xy_ratio)))
+            y_pos = np.linspace(self.theta_y_lims[0], self.theta_y_lims[1], np.round(
+                np.sqrt(self.n_total * xy_ratio)))
 
             self.n_total = len(np.meshgrid(x_pos, y_pos)[0].flatten())
 
@@ -150,12 +155,15 @@ class DemoSim:
         self.ax = plt.axes(xlim=self.theta_x_lims, ylim=self.theta_y_lims)
         self.ax.set_facecolor('black')
 
-        if self.show_orig: # Show original star positions
-            self.scatter = self.ax.scatter(self.sources["theta_x"], self.sources["theta_y"], **self.star_orig_kwargs)
+        if self.show_orig:  # Show original star positions
+            self.scatter = self.ax.scatter(
+                self.sources["theta_x"], self.sources["theta_y"], **self.star_orig_kwargs)
 
-        if self.show_lens: # Show lens positions
-            self.x_coords = np.linspace(self.theta_x_lims[0], self.theta_x_lims[1], n_lens_x)
-            self.y_coords = np.linspace(self.theta_y_lims[0], self.theta_y_lims[1], n_lens_y)
+        if self.show_lens:  # Show lens positions
+            self.x_coords = np.linspace(
+                self.theta_x_lims[0], self.theta_x_lims[1], n_lens_x)
+            self.y_coords = np.linspace(
+                self.theta_y_lims[0], self.theta_y_lims[1], n_lens_y)
 
             im = np.zeros((n_lens_x, n_lens_y))
 
@@ -165,20 +173,21 @@ class DemoSim:
                 r_grid = np.sqrt(self.x_grid ** 2 + self.y_grid ** 2)
                 im += \
                     np.transpose(Profiles.MdMdb_Gauss(r_grid, self.lenses["R_0"][i_lens] / self.lenses["D"][i_lens] * radtoasc,
-                                         self.lenses["M_0"][i_lens])[0])
+                                                      self.lenses["M_0"][i_lens])[0])
 
             self.imshow = self.ax.imshow(im, origin='lower', cmap='binary',
                                          extent=[*self.theta_x_lims, *self.theta_y_lims])
 
         mu_s = np.zeros((self.n_total, 2))
         theta_s = np.zeros((self.n_total, 2))
-    
+
         # Deflection and proper motion vectors
         for i_lens in range(self.n_lens):
             b_ary = np.transpose([self.sources["theta_x"] - self.lenses["theta_x"][i_lens],
                                   self.sources["theta_y"] - self.lenses["theta_y"][i_lens]]) * asctorad
 
-            vel_l = np.array([self.lenses["v_x"][i_lens], self.lenses["v_y"][i_lens]])
+            vel_l = np.array([self.lenses["v_x"][i_lens],
+                              self.lenses["v_y"][i_lens]])
             for i_source in range(self.n_total):
                 mu_s[i_source] += self.mu(b_ary[i_source], vel_l / self.lenses["D"][i_lens],
                                           self.lenses["R_0"][i_lens],
@@ -191,7 +200,8 @@ class DemoSim:
         self.sources["theta_y"] = self.sources["theta_y_0"] + theta_s[:, 1]
 
         if self.show_sources:
-            self.scatter = self.ax.scatter(self.sources["theta_x"], self.sources["theta_y"], **self.star_kwargs);
+            self.scatter = self.ax.scatter(
+                self.sources["theta_x"], self.sources["theta_y"], **self.star_kwargs)
 
         if self.show_vel_arrow:
             self.arrows = []
@@ -199,8 +209,10 @@ class DemoSim:
             for i_source in range(self.n_total):
                 self.arrows.append(self.ax.add_patch(Arrow(self.sources["theta_x"][i_source],
                                                            self.sources["theta_y"][i_source],
-                                                           mu_s[i_source, 0] * self.arrow_mult,
-                                                           mu_s[i_source, 1] * self.arrow_mult,
+                                                           mu_s[i_source, 0] *
+                                                           self.arrow_mult,
+                                                           mu_s[i_source, 1] *
+                                                           self.arrow_mult,
                                                            **self.arrow_kwargs)))
 
         # Turn off all ticks
@@ -209,11 +221,13 @@ class DemoSim:
         self.ax.get_xaxis().set_ticklabels([])
         self.ax.get_yaxis().set_ticklabels([])
 
-        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+        plt.subplots_adjust(top=1, bottom=0, right=1,
+                            left=0, hspace=0, wspace=0)
 
         # Animate if required, otherwise return still image
         if animate:
-            anim = FuncAnimation(fig, self.update, interval=interval, frames=n_frames, fargs=[dt])
+            anim = FuncAnimation(
+                fig, self.update, interval=interval, frames=n_frames, fargs=[dt])
             return anim
         else:
             return fig
@@ -228,7 +242,8 @@ class DemoSim:
             b_ary = np.transpose([self.sources["theta_x"] - self.lenses["theta_x"][i_lens],
                                   self.sources["theta_y"] - self.lenses["theta_y"][i_lens]]) * asctorad
 
-            vel_l = np.array([self.lenses["v_x"][i_lens], self.lenses["v_y"][i_lens]])
+            vel_l = np.array([self.lenses["v_x"][i_lens],
+                              self.lenses["v_y"][i_lens]])
             for i_source in range(self.n_total):
                 mu_s[i_source] += self.mu(b_ary[i_source], vel_l / self.lenses["D"][i_lens],
                                           self.lenses["R_0"][i_lens],
@@ -244,7 +259,8 @@ class DemoSim:
         self.sources["theta_x"] = self.sources["theta_x_0"] + theta_s[:, 0]
         self.sources["theta_y"] = self.sources["theta_y_0"] + theta_s[:, 1]
 
-        self.scatter.set_offsets(np.transpose([self.sources["theta_x"], self.sources["theta_y"]]))
+        self.scatter.set_offsets(np.transpose(
+            [self.sources["theta_x"], self.sources["theta_y"]]))
 
         if self.show_lens:
             im = np.zeros_like(self.x_grid)
@@ -264,8 +280,10 @@ class DemoSim:
                 self.arrows[i_source].remove()
                 self.arrows[i_source] = self.ax.add_patch(Arrow(self.sources["theta_x"][i_source],
                                                                 self.sources["theta_y"][i_source],
-                                                                mu_s[i_source, 0] * self.arrow_mult,
-                                                                mu_s[i_source, 1] * self.arrow_mult,
+                                                                mu_s[i_source, 0] *
+                                                                self.arrow_mult,
+                                                                mu_s[i_source, 1] *
+                                                                self.arrow_mult,
                                                                 **self.arrow_kwargs))
 
     @classmethod
@@ -273,8 +291,10 @@ class DemoSim:
         """ Get lens-induced proper motion vector
         """
 
-        b_vec = d_lens * np.array(beta_vec)  # Convert angular to physical impact parameter
-        v_vec = d_lens * np.array(v_ang_vec)  # Convert angular to physical velocity
+        # Convert angular to physical impact parameter
+        b_vec = d_lens * np.array(beta_vec)
+        # Convert angular to physical velocity
+        v_vec = d_lens * np.array(v_ang_vec)
         b = np.linalg.norm(b_vec)  # Impact parameter
         M, dMdb, _ = Profiles.MdMdb_Gauss(b, R_0, M_0)
         b_unit_vec = b_vec / b  # Convert angular to physical impact parameter
@@ -289,7 +309,8 @@ class DemoSim:
         """ Get lens-induced deflection vector
         """
 
-        b_vec = d_lens * np.array(beta_vec)  # Convert angular to physical impact parameter
+        # Convert angular to physical impact parameter
+        b_vec = d_lens * np.array(beta_vec)
         b = np.linalg.norm(b_vec)  # Impact parameter
         M, _, _ = Profiles.MdMdb_Gauss(b, R_0, M_0)
         b_unit_vec = b_vec / b  # Convert angular to physical impact parameter

@@ -8,11 +8,13 @@ from scipy.misc import derivative
 from scipy.optimize import minimize, fsolve
 from scipy.special import erfc
 from classy import Class
-import random, string
+import random
+import string
 
 from theory.spec_calc import PowerSpectra, PowerSpectraPopulations
 from theory.astrometry_forecast import Parameter, AstrometryObservation, FisherForecast
 from theory.units import *
+
 
 class MassFunctionKink:
     def __init__(self, A_s=2.105 / 1e9, n_s=0.9665, gen_file='/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/theory/arrays/pk/generate_Pk_kink.py'):
@@ -35,8 +37,8 @@ class MassFunctionKink:
             # Output settings
             'output': 'mPk',
             'P_k_max_1/Mpc': k_max,
-            'k_per_decade_for_pk':5,
-            'k_per_decade_for_bao':20,
+            'k_per_decade_for_pk': 5,
+            'k_per_decade_for_bao': 20,
             'P_k_ini type': 'external_Pk',
             'command': "python " + str(self.gen_file),
             'custom1': 0.05,
@@ -57,6 +59,7 @@ class MassFunctionKink:
         letters = string.ascii_lowercase
         return ''.join(random.choice(letters) for i in range(length))
 
+
 class Sigma():
     def __init__(self, log10_P_interp):
         self.log10_P_interp = log10_P_interp
@@ -72,16 +75,19 @@ class Sigma():
         for i in range(1, n_iter_max):
             z_coll_ary[i] = fsolve(lambda z_coll: np.abs(
                 erfc((self.delta_sc(z_coll) - self.delta_sc(0)) / (np.sqrt(2 * (self.sigma(f * M200) ** 2 - self.sigma(M200) ** 2)))) - (
-                            (-1 + np.log(4)) / 2. / (-1 + 1 / (1 + c200_ary[i - 1]) + np.log(1 + c200_ary[i - 1])))),
-                                     z_coll_ary[i-1])[0]
+                    (-1 + np.log(4)) / 2. / (-1 + 1 / (1 + c200_ary[i - 1]) + np.log(1 + c200_ary[i - 1])))),
+                z_coll_ary[i-1])[0]
             c200_ary[i] = fsolve(lambda c200: np.abs(
                 C * (Planck15.H(z_coll_ary[i]).value / Planck15.H0.value) ** 2 - (
-                            200. / 3. / 4. * c200 ** 3 / (np.log(1 + c200) - c200 / (1 + c200)))), c200_ary[i-1])
+                    200. / 3. / 4. * c200 ** 3 / (np.log(1 + c200) - c200 / (1 + c200)))), c200_ary[i-1])
 
-            z_err = np.abs((z_coll_ary[i] - z_coll_ary[i - 1]) / z_coll_ary[i - 1])
-            c200_err = np.abs((c200_ary[i] - c200_ary[i - 1]) / c200_ary[i - 1])
+            z_err = np.abs(
+                (z_coll_ary[i] - z_coll_ary[i - 1]) / z_coll_ary[i - 1])
+            c200_err = np.abs(
+                (c200_ary[i] - c200_ary[i - 1]) / c200_ary[i - 1])
 
-            if z_err < 0.01 and c200_err < 0.01: break
+            if z_err < 0.01 and c200_err < 0.01:
+                break
 
         return c200_ary[i], z_coll_ary[i]
 
@@ -112,7 +118,7 @@ class Sigma():
         ''' Equation 5 of arxiv.org/pdf/1309.5385.pdf
         '''
         gamma = 0.55
-        f = lambda z: 1 / (1 + z) * (Planck15.Om(z)) ** gamma
+        def f(z): return 1 / (1 + z) * (Planck15.Om(z)) ** gamma
         growth_factor = np.exp(-quad(f, 0, z, epsabs=0, epsrel=1e-10)[0])
         return growth_factor
 

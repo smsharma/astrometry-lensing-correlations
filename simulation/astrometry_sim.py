@@ -16,7 +16,7 @@ class QuasarSim(SubhaloSample):
                  sim_uniform=False, nside=512, calc_powerspecs=True, do_alpha=False, *args, **kwargs):
         """ Class for simulating lens-induced astrometric perturbations
             in Gaia DR2 QSOs or a uniform quasar sample. 
-        
+
             :param verbose: whether to print out progress
             :param max_sep: maximum seperation in degrees to consider between lenses and quasars
             :param data_dir: local folder with external data
@@ -82,15 +82,18 @@ class QuasarSim(SubhaloSample):
         # coords_qsrs_icrs = SkyCoord(ra=ra*u.deg, dec=dec*u.deg, frame='icrs')
         # self.coords_qsrs = coords_qsrs_icrs.transform_to('galactic')
 
-        self.coords_qsrs = SkyCoord(l=ra * u.deg, b=dec * u.deg, frame='galactic')
+        self.coords_qsrs = SkyCoord(
+            l=ra * u.deg, b=dec * u.deg, frame='galactic')
         self.n_qsrs = len(pd_qsrs)
 
     def load_uniform_sample(self, nside):
         """ Load a uniform sample of background sources
             located on the centers of Healpix pixels
         """
-        l_ary, b_ary = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)), lonlat=True)
-        self.coords_qsrs = SkyCoord(l=l_ary * u.deg, b=b_ary * u.deg, frame='galactic')
+        l_ary, b_ary = hp.pix2ang(nside, np.arange(
+            hp.nside2npix(nside)), lonlat=True)
+        self.coords_qsrs = SkyCoord(
+            l=l_ary * u.deg, b=b_ary * u.deg, frame='galactic')
         self.n_qsrs = hp.nside2npix(nside)
 
     def get_angular_sep_dir(self, pos1, pos2):
@@ -106,11 +109,13 @@ class QuasarSim(SubhaloSample):
         theta_src, phi_src = np.radians(90 - b1), np.radians(l1)
 
         # Get unit vectors at position of lens
-        theta_hat = [np.cos(theta_lens) * np.cos(phi_lens), np.cos(theta_lens) * np.sin(phi_lens), -np.sin(theta_lens)]
+        theta_hat = [np.cos(theta_lens) * np.cos(phi_lens),
+                     np.cos(theta_lens) * np.sin(phi_lens), -np.sin(theta_lens)]
         phi_hat = [-np.sin(phi_lens), np.cos(phi_lens), 0]
 
         # Get vectors corresponding to pos1 and pos2
-        vec1 = np.array([np.sin(theta_src) * np.cos(phi_src), np.sin(theta_src) * np.sin(phi_src), np.cos(theta_src)])
+        vec1 = np.array([np.sin(theta_src) * np.cos(phi_src),
+                         np.sin(theta_src) * np.sin(phi_src), np.cos(theta_src)])
         vec2 = np.array(
             [np.sin(theta_lens) * np.cos(phi_lens), np.sin(theta_lens) * np.sin(phi_lens), np.cos(theta_lens)])
 
@@ -145,7 +150,8 @@ class QuasarSim(SubhaloSample):
             self.pm_b_lens = self.coords_galactic.pm_b.value[i_lens]
 
             # Convert lens velocity from mas/yr to natural units
-            v_lens = np.array([self.pm_l_cosb_lens, self.pm_b_lens]) * 1e-3 * asctorad / Year
+            v_lens = np.array(
+                [self.pm_l_cosb_lens, self.pm_b_lens]) * 1e-3 * asctorad / Year
 
             # Indices of quasars around lens i_lens
             idxs_qsrs_around = idxs_qsrs[idxs_lenses == i_lens]
@@ -160,7 +166,8 @@ class QuasarSim(SubhaloSample):
             # Angular impact parameters of quasars around lens i_lens
             # This can be sped up/improved by vectorizing!
             self.beta_lens_qsrs_around = np.array([beta_ary[i] * self.get_angular_sep_dir(
-                [self.coords_qsrs.l.value[idxs_qsrs_around][i], self.coords_qsrs.b.value[idxs_qsrs_around][i]],
+                [self.coords_qsrs.l.value[idxs_qsrs_around][i],
+                    self.coords_qsrs.b.value[idxs_qsrs_around][i]],
                 [self.l_lens, self.b_lens]) for i in (range(len(idxs_qsrs_around)))])
 
             # Grab some lens properties
@@ -171,7 +178,8 @@ class QuasarSim(SubhaloSample):
             # Populate quasar induced velocity (and optionally accelerations) array
             for i_qsr, idx_qsr in enumerate((idxs_qsrs_around)):
 
-                mu_qsr = self.mu(d_lens * self.beta_lens_qsrs_around[i_qsr], d_lens * v_lens, c200_lens, m_lens)
+                mu_qsr = self.mu(
+                    d_lens * self.beta_lens_qsrs_around[i_qsr], d_lens * v_lens, c200_lens, m_lens)
                 self.mu_qsrs[idx_qsr] += mu_qsr
 
                 # Get induced accleration as well if specified
@@ -243,12 +251,15 @@ class QuasarSim(SubhaloSample):
         """ Calculate vector spherical harmonic coefficients
         """
         if self.calc_powerspecs:
-            self.Cl_B, self.Cl_C, self.fB, self.fC = get_vector_alm(self.mu_qsrs[:, 1], self.mu_qsrs[:, 0])
+            self.Cl_B, self.Cl_C, self.fB, self.fC = get_vector_alm(
+                self.mu_qsrs[:, 1], self.mu_qsrs[:, 0])
             if self.do_alpha:
                 self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = get_vector_alm(self.alpha_qsrs[:, 1],
                                                                                                 self.alpha_qsrs[:, 0])
-                self.Cl_B_mu_alpha = get_cross_correlation_Cells(self.fB, self.fB_alpha)
-                self.Cl_C_mu_alpha = get_cross_correlation_Cells(self.fC, self.fC_alpha)
+                self.Cl_B_mu_alpha = get_cross_correlation_Cells(
+                    self.fB, self.fB_alpha)
+                self.Cl_C_mu_alpha = get_cross_correlation_Cells(
+                    self.fC, self.fC_alpha)
             else:
                 self.Cl_B_alpha, self.Cl_C_alpha, self.fB_alpha, self.fC_alpha = [], [], [], []
                 self.Cl_B_mu_alpha, self.Cl_C_mu_alpha = [], []
@@ -262,8 +273,10 @@ class QuasarSim(SubhaloSample):
         """ Save sim output
         """
         np.savez(self.save_dir + '/' + self.save_tag,
-                 pos_lens=[self.coords_galactic.l.value, self.coords_galactic.b.value],
-                 vel_lens=[self.coords_galactic.pm_l_cosb.value, self.coords_galactic.pm_b.value],
+                 pos_lens=[self.coords_galactic.l.value,
+                           self.coords_galactic.b.value],
+                 vel_lens=[self.coords_galactic.pm_l_cosb.value,
+                           self.coords_galactic.pm_b.value],
                  mu_qsrs=np.transpose(self.mu_qsrs),  # in as/yr
                  Cl_B=self.Cl_B,
                  Cl_C=self.Cl_C,

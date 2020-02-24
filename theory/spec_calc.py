@@ -2,7 +2,6 @@ import numpy as np
 import mpmath as mp
 from scipy.special import kn
 from tqdm import *
-# from skmonaco import mcquad
 
 from theory.units import *
 from theory.profiles import Profiles

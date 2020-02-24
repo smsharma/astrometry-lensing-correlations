@@ -5,7 +5,8 @@ from theory.units import *
 class FisherForecast:
     def __init__(self, parameters, observation):
 
-        self.c_l_mu_fid, self.c_l_alpha_fid, self.l_min, self.l_max, *self.parameters = parameters
+        self.c_l_mu_fid, self.c_l_alpha_fid, self.l_min, self.l_max, * \
+            self.parameters = parameters
         self.observation = observation
         self.n_pars_tot = 0
         self.n_pars_vary = 0
@@ -42,7 +43,8 @@ class FisherForecast:
             self.l_min_arr.append(self.observation.l_min_mu)
             self.l_max_arr.append(self.observation.l_max_mu)
             self.c_l_fid_ary.append(self.c_l_mu_fid)
-            self.N_l_ary.append(np.ones_like(self.l_ary) * self.observation.N_l_mu_val)
+            self.N_l_ary.append(np.ones_like(self.l_ary) *
+                                self.observation.N_l_mu_val)
             self.c_l_p_ary.append([par.C_l_mu_p for par in self.pars_vary])
             self.c_l_m_ary.append([par.C_l_mu_m for par in self.pars_vary])
 
@@ -51,13 +53,17 @@ class FisherForecast:
             self.l_min_arr.append(self.observation.l_min_alpha)
             self.l_max_arr.append(self.observation.l_max_alpha)
             self.c_l_fid_ary.append(self.c_l_alpha_fid)
-            self.N_l_ary.append(np.ones_like(self.l_ary) * self.observation.N_l_alpha_val)
+            self.N_l_ary.append(np.ones_like(self.l_ary) *
+                                self.observation.N_l_alpha_val)
             self.c_l_p_ary.append([par.C_l_alpha_p for par in self.pars_vary])
             self.c_l_m_ary.append([par.C_l_alpha_m for par in self.pars_vary])
 
-        self.cl_fid_ary = np.zeros([len(self.l_ary), self.n_tracers, self.n_tracers])
-        self.cl_noise_ary = np.zeros([len(self.l_ary), self.n_tracers, self.n_tracers])
-        self.dcldpar_ary = np.zeros([self.n_pars_vary, len(self.l_ary), self.n_tracers, self.n_tracers])
+        self.cl_fid_ary = np.zeros(
+            [len(self.l_ary), self.n_tracers, self.n_tracers])
+        self.cl_noise_ary = np.zeros(
+            [len(self.l_ary), self.n_tracers, self.n_tracers])
+        self.dcldpar_ary = np.zeros([self.n_pars_vary, len(
+            self.l_ary), self.n_tracers, self.n_tracers])
 
         for itr in range(self.n_tracers):
             self.cl_fid_ary[:, itr, itr] = self.c_l_fid_ary[itr]
@@ -65,11 +71,12 @@ class FisherForecast:
 
             for ipar, par in enumerate(self.pars_vary):
                 self.dcldpar_ary[ipar, :, itr, itr] = (self.c_l_p_ary[itr][ipar] - self.c_l_m_ary[itr][ipar]) / (
-                            2 * par.dpar)
+                    2 * par.dpar)
 
     def get_fisher(self):
 
-        self.fshr_l = np.zeros([self.n_pars_vary, self.n_pars_vary, len(self.l_ary)])
+        self.fshr_l = np.zeros(
+            [self.n_pars_vary, self.n_pars_vary, len(self.l_ary)])
         self.fshr_prior = np.zeros([self.n_pars_vary, self.n_pars_vary])
         self.fshr_cls = np.zeros([self.n_pars_vary, self.n_pars_vary])
 
@@ -78,7 +85,8 @@ class FisherForecast:
                 self.fshr_prior[ipar, ipar] = 1 / par.prior ** 2
 
         for il, ell in enumerate(self.l_ary):
-            indices = np.where((self.l_min_arr <= ell) & (self.l_max_arr >= ell))[0]
+            indices = np.where((self.l_min_arr <= ell) &
+                               (self.l_max_arr >= ell))[0]
             cl_fid = self.cl_fid_ary[il, indices, :][:, indices]
             cl_noise = self.cl_noise_ary[il, indices, :][:, indices]
             icl = np.linalg.inv(cl_fid + cl_noise)
