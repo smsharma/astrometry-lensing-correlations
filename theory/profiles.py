@@ -13,7 +13,7 @@ class Profiles:
     """ A collection of helper functions of halo profiles and their various properties.
     """
 
-    def __init__(self, data_dir='/Users/smsharma/PycharmProjects/Lensing-PowerSpectra/data'):
+    def __init__(self, data_dir='../data/'):
         self.c200_model = self.c200_SCP  # Set a default concentration model to start
 
         # Set default function to numpy rather than mpmath, then switch where necessary
