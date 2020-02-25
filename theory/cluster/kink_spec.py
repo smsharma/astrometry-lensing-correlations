@@ -41,7 +41,7 @@ l_max = results.l_max
 # pk_dir = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/'
 # save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster_out/'
 
-pk_dir = '/home/sm8383/Lensing-PowerSpectra/theory/arrays/pk/'
+pk_dir = '/home/sm8383/Lensing-PowerSpectra/data/arrays/pk/'
 save_dir  = '/home/sm8383/Lensing-PowerSpectra/theory/cluster/cluster_out/'
 
 # Get class instance with custom primordial power spectrum
