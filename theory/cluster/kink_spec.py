@@ -164,7 +164,7 @@ C_l_alpha = (10 ** np.interp(np.log10(l_ary_arange), np.log10(l_ary), np.log10(C
 lim_ska, sig_ska = get_sens(C_l_mu, C_l_alpha, f_sky=1, sigma_mu=1, N_q_mu=1e8, sigma_alpha=-1, l_max=l_max, l_max_alpha=3, l_max_mu=5000)
 lim_wfirst, sig_wfirst = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=0.1, l_max=l_max, l_max_alpha=500000, l_max_mu=3)
 # lim_gaia, sig_gaia = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=10, l_max=l_max, l_max_alpha=500000, l_max_mu=3)
-lim_gaia, sig_gaia = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=2, l_max=l_max, l_max_alpha=50000, l_max_mu=3)
+lim_gaia, sig_gaia = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, N_q_alpha=2e9 * 20, sigma_alpha=2, l_max=l_max, l_max_alpha=50000, l_max_mu=3)
 
 np.savez(save_dir + '/' + save_tag + '_' + str(kB) + '_' + str(nB) + '_' + str(Mmin) + ".npz",
          C_l_mu=C_l_mu,
