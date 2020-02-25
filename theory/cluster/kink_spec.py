@@ -38,8 +38,11 @@ save_tag = results.save_tag
 l_cutoff = results.l_cutoff
 l_max = results.l_max
 
-pk_dir = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/'
-save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster_out/'
+# pk_dir = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/arrays/pk/'
+# save_dir  = '/group/hepheno/smsharma/Lensing-PowerSpectra/theory/cluster/cluster_out/'
+
+pk_dir = '/home/sm8383/Lensing-PowerSpectra/theory/arrays/pk/'
+save_dir  = '/home/sm8383/Lensing-PowerSpectra/theory/cluster/cluster_out/'
 
 # Get class instance with custom primordial power spectrum
 
@@ -160,7 +163,8 @@ C_l_alpha = (10 ** np.interp(np.log10(l_ary_arange), np.log10(l_ary), np.log10(C
 
 lim_ska, sig_ska = get_sens(C_l_mu, C_l_alpha, f_sky=1, sigma_mu=1, N_q_mu=1e8, sigma_alpha=-1, l_max=l_max, l_max_alpha=3, l_max_mu=5000)
 lim_wfirst, sig_wfirst = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=0.1, l_max=l_max, l_max_alpha=500000, l_max_mu=3)
-lim_gaia, sig_gaia = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=10, l_max=l_max, l_max_alpha=500000, l_max_mu=3)
+# lim_gaia, sig_gaia = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=10, l_max=l_max, l_max_alpha=500000, l_max_mu=3)
+lim_gaia, sig_gaia = get_sens(C_l_mu, C_l_alpha, f_sky=0.05, sigma_mu=-1, N_q_mu=1e8, sigma_alpha=2, l_max=l_max, l_max_alpha=50000, l_max_mu=3)
 
 np.savez(save_dir + '/' + save_tag + '_' + str(kB) + '_' + str(nB) + '_' + str(Mmin) + ".npz",
          C_l_mu=C_l_mu,
