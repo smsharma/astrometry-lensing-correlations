@@ -10,17 +10,17 @@ by Siddharth Mishra-Sharma, Ken Van Tilburg, and Neal Weiner.
 
 ![Subhalos passing through a field of stars.](plots/correlations.gif)
 
-A _highly_ exaggerated illustration of astrometric lensing. Produced in this [notebook](notebooks/09_banner.ipynb).
+A _highly_ exaggerated illustration of induced astrometric lensing effects. The red arrows indicate the instantaneous induced velocity due to the two moving lenses, with its length proportional to the magnitude. Produced in this [notebook](notebooks/09_banner.ipynb). 
 
 ## Abstract
 
-Astrometric weak gravitational lensing is a potentially powerful probe of the distribution of matter on (sub-)Galactic scales, which harbors important information about the fundamental nature of dark matter. We propose a novel method that utilizes angular power spectra to search for the correlated pattern of apparent motions of celestial objects induced from time-dependent lensing by a population of Galactic subhalos. Application of this method to upcoming astrometric datasets will allow for the direct measurement of the properties of Galactic substructure with implications for the underlying particle physics. We show that, with near-future astrometric observations, it may be possible to statistically detect populations of cold dark matter subhalos, compact objects, as well as density fluctuations sourced by scalar field dark matter. Additionally, currently-unconstrained parameter space characterizing enhanced primordial fluctuations on small scales will already be accessible using upcoming data from the ongoing _Gaia_ mission.
+Astrometric weak gravitational lensing is a potentially powerful probe of the distribution of matter on sub-Galactic scales, which harbor important information about the fundamental nature of dark matter. We propose a novel method that utilizes angular power spectra to search for the correlated pattern of apparent motions of celestial objects induced from time-dependent lensing by a population of Galactic subhalos. Application of this method to upcoming astrometric datasets will allow for the direct measurement of the properties of Galactic substructure with implications for the underlying particle physics. We show that, with near-future astrometric observations, it may be possible to statistically detect populations of cold dark matter subhalos, compact objects, as well as density fluctuations sourced by scalar field dark matter. Additionally, currently-unconstrained parameter space characterizing enhanced primordial fluctuations on small scales will already be accessible using upcoming data from the ongoing _Gaia_ mission.
 
 ## Code
 
 The dependencies of the code are listed in [environments.yml](environment.yml).
 
-The [notebooks](notebooks/) folder contains various Jupyter notebooks that reproduce the plots in the paper.
+The [notebooks](notebooks/) folder contains various Jupyter notebooks that reproduce the plots in the paper. These are linked to from the paper.
 
 ## Authors
 

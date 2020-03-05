@@ -26,11 +26,11 @@ sim = QuasarSim(max_sep=max_sep,
                 do_alpha=True,
                 save=True,
                 save_dir='/mnt/hepheno/smsharma/QuasarSim/',  # '/scratch/sm8383/QuasarSim',
-                save_tag='gaussian_uniform_galNFW_f0p1_M1e8_R1e1_nside128_sep20_mc' + \
+                save_tag='gaussian_uniform_galNFW_f0p2_M1e8_R1e2_nside128_sep20_mc' + \
                 str(imc),
                 sh_profile='Gaussian',
-                f_sub=0.1,
-                R0=10 * pc)
+                f_sub=0.2,
+                R0=100 * pc)
 
 sim.set_mass_distribution(sim.rho_M_SI, M_min=1e8*M_s, M_max=1e10*M_s,
                           M_min_calib=1e8*M_s, M_max_calib=1e10*M_s, N_calib=150, alpha=-1.9)

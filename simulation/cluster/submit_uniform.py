@@ -26,9 +26,23 @@ cd /group/hepheno/smsharma/Lensing-PowerSpectra/simulation/
 
 '''
 
-for imc in range(200,500):
+# For compact objects example
+
+for imc in range(500):
     batchn = batch  + "\n"
     batchn += "python astrometry_compact_uniform_sim_interface.py --imc " + str(imc)
+    fname = "batch/mc_" + str(imc) + ".batch" 
+    f=open(fname, "w")
+    f.write(batchn)
+    f.close()
+    os.system("chmod +x " + fname);
+    os.system("sbatch " + fname);
+
+# For CDM-like example
+
+for imc in range(500):
+    batchn = batch  + "\n"
+    batchn += "python astrometry_sim_interface.py --imc " + str(imc)
     fname = "batch/mc_" + str(imc) + ".batch" 
     f=open(fname, "w")
     f.write(batchn)
