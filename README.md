@@ -6,7 +6,7 @@ by Siddharth Mishra-Sharma, Ken Van Tilburg, and Neal Weiner.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
 [![Dark Matter](https://img.shields.io/badge/Matter-Dark-black.svg)](./)
-[![arXiv](https://img.shields.io/badge/arXiv-2003.xxxxx%20-green.svg)](https://arxiv.org/abs/2002.xxxxx)
+[![arXiv](https://img.shields.io/badge/arXiv-2003.02264%20-green.svg)](https://arxiv.org/abs/2003.02264)
 
 ![Subhalos passing through a field of stars.](plots/correlations.gif)
 
