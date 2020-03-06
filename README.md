@@ -33,7 +33,12 @@ The [notebooks](notebooks/) folder contains various Jupyter notebooks that repro
 If you use this code, please cite our paper:
 
 ```
-@article{
-    
+@misc{mishrasharma2020power,
+    title={The Power of Halometry},
+    author={Siddharth Mishra-Sharma and Ken Van Tilburg and Neal Weiner},
+    year={2020},
+    eprint={2003.02264},
+    archivePrefix={arXiv},
+    primaryClass={astro-ph.CO}
 }
 ```
