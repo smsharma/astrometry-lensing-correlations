@@ -10,7 +10,7 @@ by Siddharth Mishra-Sharma, Ken Van Tilburg, and Neal Weiner.
 
 ![Subhalos passing through a field of stars.](plots/correlations.gif)
 
-A highly exaggerated illustration of induced astrometric lensing effects. The red arrows indicate the instantaneous induced velocity due to the two moving lenses, with its length proportional to the magnitude. Produced in this [notebook](notebooks/09_banner.ipynb). 
+A highly exaggerated illustration of induced astrometric lensing effects. The red arrows indicate the instantaneous induced velocity due to the two moving lenses, with arrow length proportional to the magnitude. Produced in this [notebook](notebooks/09_banner.ipynb). 
 
 ## Abstract
 
