@@ -7,6 +7,25 @@ batch
 *.batch
 .idea
 
+# Tex
+*.aux
+*.bbl
+*.blg
+*.toc
+*.bak
+*Notes.bib
+*.bib.bak
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz*
+*.out
+*.dbj
+*.DS_Store
+.DS_Store
+auto
+lenspower.pdf
+
 # Cython output
 *.pyc
 *.so
