@@ -31,14 +31,18 @@ The [notebooks](notebooks/) folder contains various Jupyter notebooks that repro
 ## Citation
 
 If you use this code, please cite our paper:
-
 ```
-@misc{mishrasharma2020power,
-    title={The Power of Halometry},
-    author={Siddharth Mishra-Sharma and Ken Van Tilburg and Neal Weiner},
-    year={2020},
-    eprint={2003.02264},
-    archivePrefix={arXiv},
-    primaryClass={astro-ph.CO}
+@article{Mishra-Sharma:2020ynk,
+    author = "Mishra-Sharma, Siddharth and Van Tilburg, Ken and Weiner, Neal",
+    title = "{The Power of Halometry}",
+    eprint = "2003.02264",
+    archivePrefix = "arXiv",
+    primaryClass = "astro-ph.CO",
+    doi = "10.1103/PhysRevD.102.023026",
+    journal = "Phys. Rev. D",
+    volume = "102",
+    number = "2",
+    pages = "023026",
+    year = "2020"
 }
 ```
