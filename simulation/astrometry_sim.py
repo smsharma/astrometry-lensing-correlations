@@ -54,10 +54,11 @@ class QuasarSim(SubhaloSample):
 
         # self.analysis_pipeline()
 
-    def analysis_pipeline(self):
+    def analysis_pipeline(self, get_sample=True):
         """ Run analysis sequence
         """
-        self.get_sh_sample()
+        if get_sample:
+            self.get_sh_sample()
         self.get_mu_alpha()
         self.get_powerspecs()
         if self.save:
@@ -128,6 +129,43 @@ class QuasarSim(SubhaloSample):
         # Reverse theta direction since regular polar angle points down from N
         return np.array([np.dot(proj_dvec, phi_hat), -np.dot(proj_dvec, theta_hat)])
 
+    def get_angular_sep_dir_vec(self, pos1, pos2):
+        """ Get unit separation vector in (l, b) direction
+            pointing from pos2 to pos1 in the plane of pos2
+        """
+
+        # pos1 is quasar/source,  pos2 is lens
+        l1_vec, b1_vec = pos1
+        l2, b2 = pos2
+
+        theta_lens, phi_lens = np.radians(90 - b2), np.radians(l2)
+        theta_src_vec, phi_src_vec = np.radians(90 - b1_vec), np.radians(l1_vec)
+
+        # Get unit vectors at position of lens
+        theta_hat = [np.cos(theta_lens) * np.cos(phi_lens),
+                     np.cos(theta_lens) * np.sin(phi_lens), -np.sin(theta_lens)]
+        phi_hat = [-np.sin(phi_lens), np.cos(phi_lens), 0]
+
+        theta_hat = np.reshape(theta_hat, (3, 1))
+        phi_hat = np.reshape(phi_hat, (3, 1))
+
+        # Get vectors corresponding to pos1 and pos2
+        vec1 = np.array([np.sin(theta_src_vec) * np.cos(phi_src_vec),
+                         np.sin(theta_src_vec) * np.sin(phi_src_vec), np.cos(theta_src_vec)])
+        vec2 = np.array(
+            [np.sin(theta_lens) * np.cos(phi_lens), np.sin(theta_lens) * np.sin(phi_lens), np.cos(theta_lens)])
+
+        vec2 = np.reshape(vec2, (3, 1))
+        dvec = vec1 - vec2
+        
+        proj_dvec = dvec - (np.einsum('ij,ik->kj', vec1, vec2) * vec2 - vec2)
+        proj_dvec = proj_dvec / np.linalg.norm(proj_dvec, axis=0)
+
+        # Get components of displacement vector along theta and phi
+        # Reverse theta direction since regular polar angle points down from N
+        return np.array([np.einsum('ij,ik->kj', proj_dvec, phi_hat)[0], -np.einsum('ij,ik->kj', proj_dvec, theta_hat)[0]])
+
+
     def get_mu_alpha(self):
         """ Get induced velocities (and optionally accelerations) of quasars and store them in self.mu_qsrs
         """
@@ -163,30 +201,24 @@ class QuasarSim(SubhaloSample):
             self.l_lens = self.coords_galactic.l.value[i_lens]
             self.b_lens = self.coords_galactic.b.value[i_lens]
 
+            beta_ary = np.reshape(beta_ary, (1, len(beta_ary)))
+
             # Angular impact parameters of quasars around lens i_lens
-            # This can be sped up/improved by vectorizing!
-            self.beta_lens_qsrs_around = np.array([beta_ary[i] * self.get_angular_sep_dir(
-                [self.coords_qsrs.l.value[idxs_qsrs_around][i],
-                    self.coords_qsrs.b.value[idxs_qsrs_around][i]],
-                [self.l_lens, self.b_lens]) for i in (range(len(idxs_qsrs_around)))])
+            self.beta_lens_qsrs_around = beta_ary * self.get_angular_sep_dir_vec(
+                [self.coords_qsrs.l.value[idxs_qsrs_around], self.coords_qsrs.b.value[idxs_qsrs_around]],
+                [self.l_lens, self.b_lens])
+
+            self.beta_lens_qsrs_around = np.transpose(self.beta_lens_qsrs_around)
 
             # Grab some lens properties
             c200_lens, m_lens, d_lens = self.c200_sample[i_lens], self.M_sample[i_lens], self.d_sample[i_lens]
 
-            # self.mu_qsrs[idxs_qsrs_around] += self.mu_vec(d_lens * self.beta_lens_qsrs_around, d_lens * v_lens, c200_lens, m_lens)
-
             # Populate quasar induced velocity (and optionally accelerations) array
-            for i_qsr, idx_qsr in enumerate((idxs_qsrs_around)):
+            self.mu_qsrs[idxs_qsrs_around] += self.mu_vec(d_lens * self.beta_lens_qsrs_around, d_lens * v_lens, c200_lens, m_lens)
 
-                mu_qsr = self.mu(
-                    d_lens * self.beta_lens_qsrs_around[i_qsr], d_lens * v_lens, c200_lens, m_lens)
-                self.mu_qsrs[idx_qsr] += mu_qsr
-
-                # Get induced accleration as well if specified
-                if self.do_alpha:
-                    alpha_qsr = self.alpha(d_lens * self.beta_lens_qsrs_around[i_qsr], d_lens * v_lens, c200_lens,
-                                           m_lens)
-                    self.alpha_qsrs[idx_qsr] += alpha_qsr
+            # Populate accelerations. Not implemented for vectorized version of code yet.
+            if self.do_alpha:
+                self.alpha_qsrs[idxs_qsrs_around] += self.alpha_vec(d_lens * self.beta_lens_qsrs_around, d_lens * v_lens, c200_lens, m_lens)
 
     def mu(self, b_vec, v_vec, *args_lens):
         """ Get lens-induced velocity
@@ -215,6 +247,42 @@ class QuasarSim(SubhaloSample):
                   + M / b ** 2 * (v_vec - 2 * b_unit_vec * b_dot_v))
 
         return -factor * 4 * GN / (asctorad / Year)  # Convert to as/yr
+
+    def mu_vec(self, b_vec, v_vec, *args_lens):
+        """ Get lens-induced velocity
+
+            :param b_vec: physical impact parameter (pointing lens to source) vector in rad
+            :param v_vec: physical velocity in natural units
+            :param args_lens: arguments going into enclosed mass function
+            :return: lens-induced velocity in as/yr
+        """
+
+        b = np.linalg.norm(b_vec, axis=1)  # Impact parameter
+
+        if self.sh_profile == "NFW":
+            MdMdb_func = self.MdMdb_NFW
+        elif self.sh_profile == "Plummer":
+            MdMdb_func = self.MdMdb_Plummer
+        elif self.sh_profile == "Gaussian":
+            MdMdb_func = self.MdMdb_Gauss
+        else:
+            raise Exception("Unknown profile specification!")
+
+        M, dMdb, _ = MdMdb_func(b, *args_lens)
+
+        b_unit_vec = np.transpose(b_vec) / b  # Convert angular to physical impact parameter
+        b_unit_vec = np.transpose(b_unit_vec)
+
+        b_dot_v = np.dot(b_unit_vec, v_vec)
+        b_dot_v = np.transpose(b_dot_v)
+        b_unit_vec = np.transpose(b_unit_vec)
+        v_vec = np.reshape(v_vec, (2, 1))
+        # print(np.shape(b_dot_v), np.shape(b_unit_vec))
+
+        factor = (dMdb / b * b_unit_vec * b_dot_v
+                  + M / b ** 2 * (v_vec - 2 * b_unit_vec * b_dot_v))
+
+        return np.transpose(-factor * 4 * GN / (asctorad / Year))  # Convert to as/yr
 
     def alpha(self, b_vec, v_vec, *args_lens):
         """ Get lens-induced acceleration
@@ -247,6 +315,16 @@ class QuasarSim(SubhaloSample):
 
         return -factor * 4 * GN / (asctorad / Year ** 2)  # Convert to as/yr
 
+    def alpha_vec(self, b_vec, v_vec, *args_lens):
+        """ Get lens-induced acceleration
+
+            :param b_vec: physical impact parameter (pointing lens to source) vector in rad
+            :param v_vec: physical velocity in natural units
+            :param args_lens: arguments going into enclosed mass function
+            :return: lens-induced acceleration in as/yr^2
+        """
+        raise NotImplementedError
+        
     def get_powerspecs(self):
         """ Calculate vector spherical harmonic coefficients
         """
