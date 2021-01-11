@@ -8,7 +8,7 @@ from theory.profiles import Profiles
 
 
 class PowerSpectra(Profiles):
-    def __init__(self, precompute=['Burk', 'NFW']):
+    def __init__(self, precompute=["Burk", "NFW"]):
         """ Class to calculate expected power spectra from astrometric induced velocities and accelerations
 
             :param precompute: List of profiles to precompute arrays for to speed up computation ['Burk', 'NFW']
@@ -17,9 +17,9 @@ class PowerSpectra(Profiles):
         Profiles.__init__(self)
 
         # Precompute arrays to speed up computation
-        if 'Burk' in precompute:
+        if "Burk" in precompute:
             self.precompute_MBurkdivM0()
-        if 'NFW' in precompute:
+        if "NFW" in precompute:
             self.precompute_MNFWdivM0()
 
     ##################################################
@@ -35,7 +35,7 @@ class PowerSpectra(Profiles):
             :param l: multipole
         """
         beta0 = R0 / Dl
-        return (4 * GN * M0 * v / Dl ** 2) ** 2 * np.pi / 2. * np.exp(-l ** 2 * beta0 ** 2)
+        return (4 * GN * M0 * v / Dl ** 2) ** 2 * np.pi / 2.0 * np.exp(-(l ** 2) * beta0 ** 2)
 
     def Cl_Plummer(self, R0, M0, Dl, v, l):
         """ Induced velocity power spectrum for Plummer lens
@@ -46,7 +46,7 @@ class PowerSpectra(Profiles):
             :param l: multipole
         """
         beta0 = R0 / Dl
-        return (4 * GN * M0 * v / Dl ** 2) ** 2 * np.pi / 2. * l ** 2 * beta0 ** 2 * kn(1, l * beta0) ** 2
+        return (4 * GN * M0 * v / Dl ** 2) ** 2 * np.pi / 2.0 * l ** 2 * beta0 ** 2 * kn(1, l * beta0) ** 2
 
     def Cl_Point(self, M0, Dl, v, l):
         """ Induced velocity power spectrum for point lens
@@ -55,7 +55,7 @@ class PowerSpectra(Profiles):
             :param v: (physical) velocity of lens in projection transverse to los
             :param l: multipole
         """
-        return (4 * GN * M0 * v / Dl ** 2) ** 2 * np.pi / 2.
+        return (4 * GN * M0 * v / Dl ** 2) ** 2 * np.pi / 2.0
 
     def Cl_NFW(self, M200, Dl, v, l, Rsub=None):
         """ Induced velocity power spectrum for NFW lens
@@ -65,9 +65,10 @@ class PowerSpectra(Profiles):
             :param l: multipole
         """
         if self.c200_model is self.c200_Moline:
-            kwargs = {'xsub': Rsub / R200_MW}
+            kwargs = {"xsub": Rsub / R200_MW}
         else:
             kwargs = {}
+
         r_s, rho_s = self.get_rs_rhos_NFW(M200, **kwargs)
 
         M0 = 4 * np.pi * r_s ** 3 * rho_s
@@ -79,7 +80,7 @@ class PowerSpectra(Profiles):
             MjdivM0 = 10 ** self.MNFWdivM0_integ_interp(np.log10(l), np.log10(theta_s))[0]
         return pref * M0 ** 2 * MjdivM0 ** 2
 
-    def Cl_tNFW(self, M200, Dl, v, l, tau=15.):
+    def Cl_tNFW(self, M200, Dl, v, l, tau=15.0):
         """ Induced velocity power spectrum for truncated NFW lens
             :param M200: M200 of NFW lens
             :param Dl: (physical) distance to lens
@@ -92,8 +93,7 @@ class PowerSpectra(Profiles):
         pref = GN ** 2 * v ** 2 * 8 * np.pi * l ** 2 / Dl ** 4
         theta_s = r_s / Dl
         self.set_mp()
-        MjdivM0 = mp.quadosc(lambda theta: self.MtNFWdivM0(theta / theta_s, tau) * mp.j1(l * theta), [0, mp.inf],
-                             period=2 * mp.pi / l)
+        MjdivM0 = mp.quadosc(lambda theta: self.MtNFWdivM0(theta / theta_s, tau) * mp.j1(l * theta), [0, mp.inf], period=2 * mp.pi / l)
         return pref * M0 ** 2 * MjdivM0 ** 2
 
     def Cl_Burk(self, M200, Dl, v, l, p=0.7):
@@ -215,7 +215,7 @@ class PowerSpectraPopulations(PowerSpectra):
         norm *= measure
 
         logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 500)
-        measure_mass = (logM_integ_ary[1] - logM_integ_ary[0])
+        measure_mass = logM_integ_ary[1] - logM_integ_ary[0]
 
         self.norm_mass = 0
 
@@ -228,7 +228,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         l_los_ary = np.logspace(-5, 5, 200) * pc
         n_lens_ary = [self.n_lens(l_los_max=l_max) for l_max in l_los_ary]
-        self.l_cutoff = (10 ** np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary)))
+        self.l_cutoff = 10 ** np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary))
 
     def set_mass_distribution_compact(self, M_DM, f_DM, R0_DM=0):
         # TODO: Stabilize distributions
@@ -239,7 +239,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         logR_integ_ary = np.linspace(np.log(self.R_min / kpc), np.log(self.R_max / kpc), 500)
 
-        measure = (logR_integ_ary[1] - logR_integ_ary[0])
+        measure = logR_integ_ary[1] - logR_integ_ary[0]
 
         norm = 0
 
@@ -248,11 +248,11 @@ class PowerSpectraPopulations(PowerSpectra):
 
         norm *= measure
 
-        self.pref = self.f_DM * 1. / (self.M_DM / (1e12 * M_s)) / norm
+        self.pref = self.f_DM * 1.0 / (self.M_DM / (1e12 * M_s)) / norm
 
         l_los_ary = np.logspace(-2, 2, 100) * kpc
         n_lens_ary = [self.n_lens_compact(l_los_max=l_max) for l_max in l_los_ary]
-        self.l_cutoff = (10 ** np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary)))
+        self.l_cutoff = 10 ** np.interp(0, np.log10(n_lens_ary), np.log10(l_los_ary))
 
     def n_lens(self, l_los_max, l_los_min=0 * kpc):
         """
@@ -336,8 +336,7 @@ class PowerSpectraPopulations(PowerSpectra):
             pref = 1
             units = (1e-6 * asctorad / Year) ** 2
 
-        return pref * l * m * self.Cl_NFW(m, l, 1, ell, r) / units * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r,
-                                                                                                                     **self.rho_R_kwargs) * l ** 2 / r ** 2
+        return pref * l * m * self.Cl_NFW(m, l, 1, ell, r) / units * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r, **self.rho_R_kwargs) * l ** 2 / r ** 2
 
     def integrand_gc(self, x, ell, accel=False):
         """
@@ -355,8 +354,7 @@ class PowerSpectraPopulations(PowerSpectra):
             units = (1e-6 * asctorad / Year) ** 2
 
         l = np.sqrt(r ** 2 + Rsun ** 2 + 2 * r * Rsun * np.cos(theta))
-        return pref * r * m * self.Cl_NFW(m, l, 1, ell, r) / units * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r,
-                                                                                                                     **self.rho_R_kwargs)
+        return pref * r * m * self.Cl_NFW(m, l, 1, ell, r) / units * self.rho_M(m, **self.rho_M_kwargs) * self.rho_R(r, **self.rho_R_kwargs)
 
     def integrand_compact(self, x, ell, accel=False):
         """
@@ -375,12 +373,9 @@ class PowerSpectraPopulations(PowerSpectra):
             units = (1e-6 * asctorad / Year) ** 2
 
         if not self.R0_DM == 0:
-            return pref * l * self.Cl_Gauss(self.R0_DM, self.M_DM, l, 1, ell) / units * self.rho_R(r,
-                                                                                                   **self.rho_R_kwargs) \
-                   * l ** 2 / r ** 2
+            return pref * l * self.Cl_Gauss(self.R0_DM, self.M_DM, l, 1, ell) / units * self.rho_R(r, **self.rho_R_kwargs) * l ** 2 / r ** 2
         else:
-            return pref * l * self.Cl_Point(self.M_DM, l, 1, ell) / units * self.rho_R(r, **self.rho_R_kwargs) \
-                   * l ** 2 / r ** 2
+            return pref * l * self.Cl_Point(self.M_DM, l, 1, ell) / units * self.rho_R(r, **self.rho_R_kwargs) * l ** 2 / r ** 2
 
     def C_l_total(self, ell, theta_deg_mask=0, l_los_min=0.1 * kpc, l_los_max=200 * kpc, accel=False):
         """
@@ -400,8 +395,7 @@ class PowerSpectraPopulations(PowerSpectra):
         theta_integ_ary = np.linspace(theta_rad_mask, np.pi - theta_rad_mask, 20)
         logM_integ_ary = np.linspace(np.log(self.M_min / M_s), np.log(self.M_max / M_s), 20)
 
-        measure = (logl_integ_ary[1] - logl_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0]) * (
-                logM_integ_ary[1] - logM_integ_ary[0])
+        measure = (logl_integ_ary[1] - logl_integ_ary[0]) * (theta_integ_ary[1] - theta_integ_ary[0]) * (logM_integ_ary[1] - logM_integ_ary[0])
 
         integ = 0
         for logl in logl_integ_ary:
@@ -436,7 +430,7 @@ class PowerSpectraPopulations(PowerSpectra):
 
         integ = 0
 
-        for logl in (logl_integ_ary):
+        for logl in logl_integ_ary:
             for theta in theta_integ_ary:
                 integ += np.sin(theta) * self.integrand_compact([logl, theta], ell, accel)
         integ *= 2 * np.pi * measure
@@ -502,9 +496,7 @@ class PowerSpectraPopulations(PowerSpectra):
         """
         Get power spectrum over full multipole range
         """
-        self.C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min,
-                                       l_los_max=l_los_max) for ell in
-                        tqdm_notebook(self.l_ary_calc)]
+        self.C_l_calc_ary = [self.C_l_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min, l_los_max=l_los_max) for ell in tqdm_notebook(self.l_ary_calc)]
         self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(self.C_l_calc_ary))
         return self.C_l_ary
 
@@ -515,17 +507,10 @@ class PowerSpectraPopulations(PowerSpectra):
 
         if self.R0_DM == 0:
             if accel:
-                self.C_l_ary = self.l_ary ** 2 * np.array(len(self.l_ary) * \
-                                                          [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask,
-                                                                                  accel=True, l_los_min=l_los_min,
-                                                                                  l_los_max=l_los_max)])
+                self.C_l_ary = self.l_ary ** 2 * np.array(len(self.l_ary) * [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=True, l_los_min=l_los_min, l_los_max=l_los_max)])
             else:
-                self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1,
-                                                                         theta_deg_mask=theta_deg_mask, accel=False,
-                                                                         l_los_min=l_los_min, l_los_max=l_los_max)]
+                self.C_l_ary = len(self.l_ary) * [self.C_l_compact_total(1, theta_deg_mask=theta_deg_mask, accel=False, l_los_min=l_los_min, l_los_max=l_los_max)]
         else:
-            self.C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min,
-                                                   l_los_max=l_los_max) for ell in
-                            (self.l_ary_calc)]
+            self.C_l_calc_ary = [self.C_l_compact_total(ell, theta_deg_mask=theta_deg_mask, accel=accel, l_los_min=l_los_min, l_los_max=l_los_max) for ell in (self.l_ary_calc)]
             self.C_l_ary = 10 ** np.interp(np.log10(self.l_ary), np.log10(self.l_ary_calc), np.log10(self.C_l_calc_ary))
         return np.array(self.C_l_ary)

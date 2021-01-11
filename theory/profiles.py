@@ -13,7 +13,7 @@ class Profiles:
     """ A collection of helper functions of halo profiles and their various properties.
     """
 
-    def __init__(self, data_dir='../data/'):
+    def __init__(self, data_dir="../data/"):
         self.c200_model = self.c200_SCP  # Set a default concentration model to start
 
         # Set default function to numpy rather than mpmath, then switch where necessary
@@ -32,7 +32,7 @@ class Profiles:
     def MGauss(self, theta, M0, beta0):
         """ Enclosed mass in cylinder, Gaussian profile
         """
-        return M0 * (1 - mp.exp(-theta ** 2 / (2 * beta0 ** 2)))
+        return M0 * (1 - mp.exp(-(theta ** 2) / (2 * beta0 ** 2)))
 
     @classmethod
     def MPlumm(self, theta, M0, beta0):
@@ -43,9 +43,9 @@ class Profiles:
     def MNFWdivM0(self, x):
         """ Enclosed mass in cylinder, NFW profile
         """
-        return (mp.log(x / 2) + self.F(x))
+        return mp.log(x / 2) + self.F(x)
 
-    def MtNFWdivM0(self, x, tau=15.):
+    def MtNFWdivM0(self, x, tau=15.0):
         """ Enclosed mass in cylinder, tNFW profile
         """
         return self.Ft(x, tau)
@@ -67,11 +67,11 @@ class Profiles:
             :param M200: NFW mass
             :return: mass within `b`, derivative of mass within `b` at `b`
         """
-        delta_c = (200 / 3.) * c200 ** 3 / (np.log(1 + c200) - c200 / (1 + c200))
+        delta_c = (200 / 3.0) * c200 ** 3 / (np.log(1 + c200) - c200 / (1 + c200))
         rho_s = rho_c * delta_c
-        r_s = (M200 / ((4 / 3.) * np.pi * c200 ** 3 * 200 * rho_c)) ** (1 / 3.)  # NFW scale radius
+        r_s = (M200 / ((4 / 3.0) * np.pi * c200 ** 3 * 200 * rho_c)) ** (1 / 3.0)  # NFW scale radius
         x = b / r_s
-        M = 4 * np.pi * rho_s * r_s ** 3 * (np.log(x / 2.) + self.F(x))
+        M = 4 * np.pi * rho_s * r_s ** 3 * (np.log(x / 2.0) + self.F(x))
         dMdb = 4 * np.pi * rho_s * r_s ** 2 * ((1 / x) + self.dFdx(x))
         d2Mdb2 = 4 * np.pi * r_s * rho_s * (-1 / x ** 2 + self.d2Fdx2(x))
         return M, dMdb, d2Mdb2
@@ -84,10 +84,9 @@ class Profiles:
             :param R0: characteristic radius of lens
             :param M0: mass of lens
         """
-        M = M0 * (1 - np.exp(-b ** 2 / (2 * R0 ** 2)))
-        dMdb = (M0 * b / R0 ** 2) * np.exp(-b ** 2 / (2 * R0 ** 2))
-        d2Mdb2 = M0 * (-((b ** 2 * np.exp(-(b ** 2 / (2 * R0 ** 2)))) / R0 ** 4) + np.exp(
-            -(b ** 2 / (2 * R0 ** 2))) / R0 ** 2)
+        M = M0 * (1 - np.exp(-(b ** 2) / (2 * R0 ** 2)))
+        dMdb = (M0 * b / R0 ** 2) * np.exp(-(b ** 2) / (2 * R0 ** 2))
+        d2Mdb2 = M0 * (-((b ** 2 * np.exp(-(b ** 2 / (2 * R0 ** 2)))) / R0 ** 4) + np.exp(-(b ** 2 / (2 * R0 ** 2))) / R0 ** 2)
 
         return M, dMdb, d2Mdb2
 
@@ -100,8 +99,7 @@ class Profiles:
         """
         M = (b ** 2 * M0) / (b ** 2 + R0 ** 2)
         dMdb = -((2 * b ** 3 * M0) / (b ** 2 + R0 ** 2) ** 2) + (2 * b * M0) / (b ** 2 + R0 ** 2)
-        d2Mdb2 = -((8 * b ** 2 * M0) / (b ** 2 + R0 ** 2) ** 2) + (2 * M0) / (b ** 2 + R0 ** 2) + b ** 2 * M0 * (
-                    (8 * b ** 2) / (b ** 2 + R0 ** 2) ** 3 - 2 / (b ** 2 + R0 ** 2) ** 2)
+        d2Mdb2 = -((8 * b ** 2 * M0) / (b ** 2 + R0 ** 2) ** 2) + (2 * M0) / (b ** 2 + R0 ** 2) + b ** 2 * M0 * ((8 * b ** 2) / (b ** 2 + R0 ** 2) ** 3 - 2 / (b ** 2 + R0 ** 2) ** 2)
 
         return M, dMdb, d2Mdb2
 
@@ -117,12 +115,8 @@ class Profiles:
         sqrt, but only the good ones are then returned. So we can just suppress these warnings
         """
         with np.errstate(divide="ignore", invalid="ignore"):
-            return np.where(
-                x == 1.0,
-                1.0,
-                np.where(x <= 1.0, self.atanh(self.sqrt(1.0 - x ** 2)) / (self.sqrt(1.0 - x ** 2)),
-                         self.atan(self.sqrt(x ** 2 - 1.0)) / (self.sqrt(x ** 2 - 1.0))),
-            )
+            return np.where(x == 1.0, 1.0, np.where(x <= 1.0, self.atanh(self.sqrt(1.0 - x ** 2)) / (self.sqrt(1.0 - x ** 2)), self.atan(self.sqrt(x ** 2 - 1.0)) / (self.sqrt(x ** 2 - 1.0))),)
+
     def dFdx(self, x):
         """ Helper function for NFW deflection, from astro-ph/0102341 eq. (49)
         """
@@ -131,16 +125,13 @@ class Profiles:
     def d2Fdx2(self, x):
         """ Helper function for NFW deflection, derivative of dFdx
         """
-        return (1 - 3 * x ** 2 + (x ** 2 + x ** 4) * self.F(x) + (x ** 3 - x ** 5) * self.dFdx(x)) / (
-                    x ** 2 * (-1 + x ** 2) ** 2)
+        return (1 - 3 * x ** 2 + (x ** 2 + x ** 4) * self.F(x) + (x ** 3 - x ** 5) * self.dFdx(x)) / (x ** 2 * (-1 + x ** 2) ** 2)
 
     def Ft(self, x, tau):
         """ Helper function for truncated NFW deflection
             TODO: cite source Mathematice nb
         """
-        return tau ** 2 / (tau ** 2 + 1) ** 2 * (
-                    (tau ** 2 + 1 + 2 * (x ** 2 - 1)) * self.F(x) + tau * mp.pi + (tau ** 2 - 1) * mp.log(
-                tau) + mp.sqrt(tau ** 2 + x ** 2) * (-mp.pi + (tau ** 2 - 1) / tau * self.L(x, tau)))
+        return tau ** 2 / (tau ** 2 + 1) ** 2 * ((tau ** 2 + 1 + 2 * (x ** 2 - 1)) * self.F(x) + tau * mp.pi + (tau ** 2 - 1) * mp.log(tau) + mp.sqrt(tau ** 2 + x ** 2) * (-mp.pi + (tau ** 2 - 1) / tau * self.L(x, tau)))
 
     def L(self, x, tau):
         """ Helper function for truncated NFW deflection
@@ -153,13 +144,11 @@ class Profiles:
             TODO: cite source Mathematice nb
         """
         if x > 1:
-            return mp.log(x / 2.) + mp.pi / 4. * (mp.sqrt(x ** 2 + 1) - 1) + mp.sqrt(x ** 2 + 1) / 2 * mp.acoth(
-                mp.sqrt(x ** 2 + 1)) - 0.5 * mp.sqrt(x ** 2 - 1) * mp.atan(mp.sqrt(x ** 2 - 1))
+            return mp.log(x / 2.0) + mp.pi / 4.0 * (mp.sqrt(x ** 2 + 1) - 1) + mp.sqrt(x ** 2 + 1) / 2 * mp.acoth(mp.sqrt(x ** 2 + 1)) - 0.5 * mp.sqrt(x ** 2 - 1) * mp.atan(mp.sqrt(x ** 2 - 1))
         elif x == 1:
-            return -mp.log(2.) - mp.pi / 4. + 1 / (2 * mp.sqrt(2)) * (mp.pi + mp.log(3 + 2 * mp.sqrt(2)))
+            return -mp.log(2.0) - mp.pi / 4.0 + 1 / (2 * mp.sqrt(2)) * (mp.pi + mp.log(3 + 2 * mp.sqrt(2)))
         elif x < 1:
-            return mp.log(x / 2.) + mp.pi / 4. * (mp.sqrt(x ** 2 + 1) - 1) + mp.sqrt(x ** 2 + 1) / 2 * mp.acoth(
-                mp.sqrt(x ** 2 + 1)) + 0.5 * mp.sqrt(1 - x ** 2) * mp.atanh(mp.sqrt(1 - x ** 2))
+            return mp.log(x / 2.0) + mp.pi / 4.0 * (mp.sqrt(x ** 2 + 1) - 1) + mp.sqrt(x ** 2 + 1) / 2 * mp.acoth(mp.sqrt(x ** 2 + 1)) + 0.5 * mp.sqrt(1 - x ** 2) * mp.atanh(mp.sqrt(1 - x ** 2))
 
     ##################################################
     # Functions to precompute enclosed mass integral
@@ -176,15 +165,13 @@ class Profiles:
         """ Enclosed mass integral for NFW profile
         """
         self.set_mp()
-        return mp.quadosc(lambda theta: self.MNFWdivM0(theta / theta_s) * mp.j1(l * theta), [0, mp.inf],
-                          period=2 * mp.pi / l)
+        return mp.quadosc(lambda theta: self.MNFWdivM0(theta / theta_s) * mp.j1(l * theta), [0, mp.inf], period=2 * mp.pi / l)
 
     def MBurkdivM0_integ(self, theta_b, l):
         """ Enclosed mass integral for Burkert profile
         """
         self.set_mp()
-        return mp.quadosc(lambda theta: self.MBurkdivM0(theta / theta_b) * mp.j1(l * theta), [0, mp.inf],
-                          period=2 * mp.pi / l)
+        return mp.quadosc(lambda theta: self.MBurkdivM0(theta / theta_b) * mp.j1(l * theta), [0, mp.inf], period=2 * mp.pi / l)
 
     def precompute_MNFWdivM0(self, n_l=100, n_theta_s=50):
         """ Precompute enclosed mass integral for NFW profile
@@ -192,9 +179,9 @@ class Profiles:
         if os.path.isfile(self.data_dir + "/arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz"):
             # print("Loading NFW parameters")
             file = np.load(self.data_dir + "/arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz")
-            l_ary = file['l_ary']
-            theta_s_ary = file['theta_s_ary']
-            MNFWdivM0_integ_ary = file['MNFWdivM0_integ_ary']
+            l_ary = file["l_ary"]
+            theta_s_ary = file["theta_s_ary"]
+            MNFWdivM0_integ_ary = file["MNFWdivM0_integ_ary"]
 
         else:
             print("Precomputing NFW parameters")
@@ -211,11 +198,9 @@ class Profiles:
                 for il, l in enumerate(tqdm_notebook(l_ary)):
                     MNFWdivM0_integ_ary[itheta_s, il] = self.MNFWdivM0_integ(theta_s, l)
 
-            np.savez(self.data_dir + "/arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz",
-                     l_ary=l_ary, theta_s_ary=theta_s_ary, MNFWdivM0_integ_ary=MNFWdivM0_integ_ary)
+            np.savez(self.data_dir + "/arrays/MNFWdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_s_" + str(n_theta_s) + ".npz", l_ary=l_ary, theta_s_ary=theta_s_ary, MNFWdivM0_integ_ary=MNFWdivM0_integ_ary)
 
-        self.MNFWdivM0_integ_interp = interp2d(np.log10(l_ary), np.log10(theta_s_ary), np.log10(MNFWdivM0_integ_ary),
-                                               kind='linear')
+        self.MNFWdivM0_integ_interp = interp2d(np.log10(l_ary), np.log10(theta_s_ary), np.log10(MNFWdivM0_integ_ary), kind="linear")
         self.precompute_NFW = True
 
     def precompute_MBurkdivM0(self, n_l=20, n_theta_b=20):
@@ -224,9 +209,9 @@ class Profiles:
         if os.path.isfile(self.data_dir + "/arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz"):
             # print("MdMdb_NFWg Burkert parameters")
             file = np.load(self.data_dir + "/arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz")
-            l_ary = file['l_ary']
-            theta_b_ary = file['theta_b_ary']
-            MBurkdivM0_integ_ary = file['MBurkdivM0_integ_ary']
+            l_ary = file["l_ary"]
+            theta_b_ary = file["theta_b_ary"]
+            MBurkdivM0_integ_ary = file["MBurkdivM0_integ_ary"]
 
         else:
             print("Precomputing Burkert parameters")
@@ -244,11 +229,9 @@ class Profiles:
                 for il, l in enumerate(tqdm_notebook(l_ary)):
                     MBurkdivM0_integ_ary[itheta_b, il] = self.MBurkdivM0_integ(theta_b, l)
 
-            np.savez(self.data_dir + "/arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz",
-                     l_ary=l_ary, theta_b_ary=theta_b_ary, MBurkdivM0_integ_ary=MBurkdivM0_integ_ary)
+            np.savez(self.data_dir + "/arrays/MBurkdivM0_integ_ary_n_l_" + str(n_l) + "_n_theta_b_" + str(n_theta_b) + ".npz", l_ary=l_ary, theta_b_ary=theta_b_ary, MBurkdivM0_integ_ary=MBurkdivM0_integ_ary)
 
-        self.MBurkdivM0_integ_interp = interp2d(np.log10(l_ary), np.log10(theta_b_ary), np.log10(MBurkdivM0_integ_ary),
-                                                kind='linear')
+        self.MBurkdivM0_integ_interp = interp2d(np.log10(l_ary), np.log10(theta_b_ary), np.log10(MBurkdivM0_integ_ary), kind="linear")
         self.precompute_Burk = True
 
     ##################################################
@@ -260,7 +243,7 @@ class Profiles:
         """
 
         c200 = self.c200_model(M200, **kwargs)
-        r200 = (M200 / (4 / 3. * np.pi * 200 * rho_c)) ** (1 / 3.)
+        r200 = (M200 / (4 / 3.0 * np.pi * 200 * rho_c)) ** (1 / 3.0)
         rho_s = M200 / (4 * np.pi * (r200 / c200) ** 3 * (np.log(1 + c200) - c200 / (1 + c200)))
         r_s = r200 / c200
         M_sc = 4 * np.pi * r_s ** 3 * rho_s * (-0.5 + np.log(2))
@@ -270,7 +253,7 @@ class Profiles:
         """ Get NFW scale radius and density
         """
         c200 = self.c200_model(M200, **kwargs)
-        r200 = (M200 / (4 / 3. * np.pi * 200 * rho_c)) ** (1 / 3.)
+        r200 = (M200 / (4 / 3.0 * np.pi * 200 * rho_c)) ** (1 / 3.0)
         rho_s = M200 / (4 * np.pi * (r200 / c200) ** 3 * (np.log(1 + c200) - c200 / (1 + c200)))
         r_s = r200 / c200
         M_sc = 4 * np.pi * r_s ** 3 * rho_s * (-0.5 + np.log(2))
@@ -281,7 +264,7 @@ class Profiles:
         """
         c200n = self.c200_SCP(M200)
         c200b = c200n / p
-        r200 = (M200 / (4 / 3. * np.pi * 200 * rho_c)) ** (1 / 3.)
+        r200 = (M200 / (4 / 3.0 * np.pi * 200 * rho_c)) ** (1 / 3.0)
         r_b = r200 / c200b
         rho_b = M200 / (r_b ** 3 * np.pi * (-2 * np.arctan(c200b) + np.log((1 + c200b) ** 2 * (1 + c200b ** 2))))
         return r_b, rho_b
@@ -289,9 +272,9 @@ class Profiles:
     ##################################################
     # Concentration-mass relations
     ##################################################
-    # Note to self: be careful with the assumptions 
-    #    (e.g. cosmology, subhalo mass function, 
-    #    (sub)halo profile) that go into these and  
+    # Note to self: be careful with the assumptions
+    #    (e.g. cosmology, subhalo mass function,
+    #    (sub)halo profile) that go into these and
     #    make sure that consistent with the rest of
     #    the analysis.
     ##################################################
@@ -320,7 +303,7 @@ class Profiles:
         c200_val = 10 ** (alpha + beta * np.log10(M200 / M_s) * (1 + gamma * (np.log10(M200 / M_s)) ** 2))
         return c200_val
 
-    def c200_Moline(self, M200, xsub=1.):
+    def c200_Moline(self, M200, xsub=1.0):
         """ Concentration-mass relation according to eq. 6 of 1603.04057
             :param M200: M200 mass of subhalo
             :param xsub: distance of subhalo from the center of host halo
@@ -329,9 +312,7 @@ class Profiles:
         c0 = 19.9
         a = [-0.195, 0.089, 0.089]
         b = -0.54
-        c200_val = c0 * (
-                    1 + np.sum([(a[i - 1] * np.log10(M200 / (1e8 * M_s / h))) ** i for i in range(1, 4)], axis=0) * (
-                        1 + b * np.log10(xsub)))
+        c200_val = c0 * (1 + np.sum([(a[i - 1] * np.log10(M200 / (1e8 * M_s / h))) ** i for i in range(1, 4)], axis=0)) * (1 + b * np.log10(xsub))
         return c200_val
 
     ##################################################
@@ -393,24 +374,23 @@ class Profiles:
     # Velocity distributions
     ##################################################
 
-    def rho_v_SHM(self, vvec, v0=220. * Kmps, vesc=544. * Kmps):
+    def rho_v_SHM(self, vvec, v0=220.0 * Kmps, vesc=544.0 * Kmps):
         """ Normalized truncated Maxwellian velocity distribution
         """
-        Nesc = erf(vesc / v0) - 2 / np.sqrt(np.pi) * vesc / v0 * np.exp(-vesc ** 2 / v0 ** 2)
+        Nesc = erf(vesc / v0) - 2 / np.sqrt(np.pi) * vesc / v0 * np.exp(-(vesc ** 2) / v0 ** 2)
         v = np.linalg.norm(vvec)
-        return 1 / (Nesc * np.pi ** 1.5 * v0 ** 3) * np.exp(-v ** 2 / v0 ** 2) * (v < vesc)
+        return 1 / (Nesc * np.pi ** 1.5 * v0 ** 3) * np.exp(-(v ** 2) / v0 ** 2) * (v < vesc)
 
-    def rho_v_SHM_scalar(self, v, v0=220. * Kmps, vesc=544. * Kmps):
+    def rho_v_SHM_scalar(self, v, v0=220.0 * Kmps, vesc=544.0 * Kmps):
         """ Normalized truncated Maxwellian velocity distribution
         """
-        return np.exp(-v ** 2 / v0 ** 2) * (v < vesc)
+        return np.exp(-(v ** 2) / v0 ** 2) * (v < vesc)
 
     def vE(self, t):
         """ Earth velocity at day of year t 
         """
         g = lambda t: omega * t
-        nu = lambda g: g + 2 * e * np.sin(g) + (5 / 4.) * e ** 2 * np.sin(2 * g)
+        nu = lambda g: g + 2 * e * np.sin(g) + (5 / 4.0) * e ** 2 * np.sin(2 * g)
         lambdaa = lambda t: lambdap + nu(g(t))
-        r = lambda t: vE0 / omega * (1 - e ** 2) / (1 + e * np.cos(nu(g(t)))) * (
-                    np.sin(lambdaa(t)) * e1 - np.cos(lambdaa(t)) * e2)
+        r = lambda t: vE0 / omega * (1 - e ** 2) / (1 + e * np.cos(nu(g(t)))) * (np.sin(lambdaa(t)) * e1 - np.cos(lambdaa(t)) * e2)
         return derivative(r, t)
